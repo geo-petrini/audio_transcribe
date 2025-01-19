@@ -61,6 +61,7 @@ class Track(db.Model):
         
 class Section(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
     ts_add = db.Column( db.Float(), default=datetime.now().timestamp() )
     start = db.Column( db.Integer() )
     end = db.Column( db.Integer() )

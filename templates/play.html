@@ -4,6 +4,7 @@
 {% block head_includes %}
 <script src="https://unpkg.com/wavesurfer.js@7"></script>
 <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/hover.min.js"></script>
 {% endblock %} {% block content %}
 <div class="row">
   <div class="col">
@@ -17,8 +18,15 @@
   // import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
 
   let file_url = "{{url_for('default.uploads', filename=track.local_name)}}";
-//   const regions = RegionsPlugin.create()
-  const regions = WaveSurfer.Regions.create()   // Initialize regions plugin
+  //   const regions = RegionsPlugin.create()
+  const regions = WaveSurfer.Regions.create(); // Initialize regions plugin
+  const hover = WaveSurfer.Hover.create({
+    lineColor: "#ffffff",
+    lineWidth: 2,
+    labelBackground: "#555",
+    labelColor: "#fff",
+    labelSize: "11px",
+  }); // Initialize regions plugin
   const ws = WaveSurfer.create({
     container: "#waveform",
     waveColor: "rgb(83,83,83)",
@@ -33,12 +41,12 @@
     mediaControls: true,
     interact: true,
     dragToSeek: true,
-    plugins: [regions],
+    plugins: [regions, hover],
   });
 
-//   ws.once("interaction", () => {
-//     ws.play();
-//   });
+  //   ws.once("interaction", () => {
+  //     ws.play();
+  //   });
   regions.enableDragSelection({
     color: "rgba(0, 0,255, 0.5)",
   });
