@@ -1,2 +1,5 @@
-nicegui
-tortoise-orm
+flask
+flask-sqlalchemy 
+flask-login
+flask-migrate
+python-dotenv

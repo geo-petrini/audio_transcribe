@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+<!-- {% block title %}Flask dice ciao{% endblock %} -->
+{% block head_includes %}
+<script src="https://unpkg.com/wavesurfer.js@7"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+{% endblock %} {% block content %}
+<div class="row">
+  <div class="col">
+    <h2>Filename: {{track.name}}</h2>
+    <div id="waveform"></div>
+  </div>
+</div>
+
+<script>
+  // import WaveSurfer from 'wavesurfer.js'
+  // import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
+
+  let file_url = "{{url_for('default.uploads', filename=track.local_name)}}";
+//   const regions = RegionsPlugin.create()
+  const regions = WaveSurfer.Regions.create()   // Initialize regions plugin
+  const ws = WaveSurfer.create({
+    container: "#waveform",
+    waveColor: "rgb(83,83,83)",
+    progressColor: "rgb(0,182,240)",
+    url: file_url,
+    // Set a bar width
+    barWidth: 10,
+    // Optionally, specify the spacing between bars
+    barGap: 2,
+    // And the bar radius
+    barRadius: 4,
+    mediaControls: true,
+    interact: true,
+    dragToSeek: true,
+    plugins: [regions],
+  });
+
+//   ws.once("interaction", () => {
+//     ws.play();
+//   });
+  regions.enableDragSelection({
+    color: "rgba(0, 0,255, 0.5)",
+  });
+
+  regions.on("region-updated", (region) => {
+    console.log("Updated region", region);
+  });
+</script>
+{% endblock %}

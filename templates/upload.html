@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Flask dice ciao{% endblock %}
+{% block content %}
+<form method=post enctype=multipart/form-data>
+    <input type=file name=file>
+    <input type=submit value=Upload>
+</form>
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+    <div class="alert alert-danger" role="alert">
+        {{ messages[0] }}
+    </div>
+{% endif %}
+{% endwith %}
+{% endblock %}
