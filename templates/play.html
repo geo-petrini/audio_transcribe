@@ -1,7 +1,5 @@
-{% extends "base.html" %}
-
-{% block title %}AC - Play{% endblock %}
-{% block head_includes %}
+{% extends "base.html" %} {% block title %}AC - Play{% endblock %} {% block
+head_includes %}
 <script src="https://unpkg.com/wavesurfer.js@7"></script>
 <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
 <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/hover.min.js"></script>
@@ -12,17 +10,33 @@
     <h2>Filename: {{track.name}}</h2>
     <div id="waveform"></div>
     <div id="add_button" class="btn-group" role="group">
-      <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+      <button
+        type="button"
+        class="btn btn-primary dropdown-toggle"
+        data-bs-toggle="dropdown"
+        aria-expanded="false"
+      >
         Add
       </button>
       <ul class="dropdown-menu">
-        <li><button id="add_section_button" class="dropdown-item" href="#">Section</button></li>
-        <li><button id="add_comment_button" class="dropdown-item" href="#">Comment</button></li>
+        <li>
+          <button id="add_section_button" class="dropdown-item" href="#">
+            Section
+          </button>
+        </li>
+        <li>
+          <button id="add_comment_button" class="dropdown-item" href="#">
+            Comment
+          </button>
+        </li>
       </ul>
     </div>
-    <div id="add_section_help_1" style="display: none;">Drag on track to add and edit a new section</div>
-    <div id="add_section_help_2" style="display: none;">Drag track to edit the time frame</div>
-
+    <div id="add_section_help_1" style="display: none">
+      Drag on track to add and edit a new section
+    </div>
+    <div id="add_section_help_2" style="display: none">
+      Drag track to edit the time frame
+    </div>
 
     <!-- <button type="button" class="btn">Add comment</button>
     <button id="add_section_button" type="button" class="btn" data-bs-toggle="button">Add section</button> -->
@@ -34,10 +48,24 @@
     <div id="regions-container"></div>
   </div>
 </div>
+<style>
+  /* https://wavesurfer.xyz/examples/?styling.js */
+  #waveform ::part(region) {
+        color: #ffffff !important;
+      }
+
+  #waveform ::part(region-handle-right) {
+    border-right-width: 4px !important;
+    border-right-color: #0000ff !important;
+  }
+
+  #waveform ::part(region-handle-left) {
+    border-left-width: 4px !important;
+    border-left-color: #0000ff !important;
+  }
+</style>
 
 <script>
-
-
   // import WaveSurfer from 'wavesurfer.js'
   // import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
 
@@ -50,9 +78,9 @@
     timeInterval: 10,
     primaryLabelInterval: 60,
     style: {
-      fontSize: '10px',
-      color: '#ffffff',
-    }
+      fontSize: "10px",
+      color: "#ffffff",
+    },
   }); // Initialize timeline plugin
   const hover = WaveSurfer.Hover.create({
     lineColor: "#ffffff",
@@ -81,36 +109,50 @@
   //   ws.once("interaction", () => {
   //     ws.play();
   //   });
-  var dragStopCallback = null
+  var dragStopCallback = null;
 
+  
   regions.on("region-created", (region) => {
     // console.log("Created region", region);
-    renderRegionCard(region)
-    $("#add_section_help_1").hide(100)
-    $("#add_section_help_2").show(100)
-    dragStopCallback()
+    renderRegionCard(region);
+    $("#add_section_help_1").hide(100);
+    $("#add_section_help_2").show(100);
+    dragStopCallback();
   });
 
+  //TODO update to regions.on("region-update", updateRegionCard)
   regions.on("region-update", (region) => {
     // console.log("Updating region", region);
-    updateRegionCard(region)
+    updateRegionCard(region);
   });
 
   regions.on("region-updated", (region) => {
     // console.log("Updated region", region);
-    updateRegionCard(region)
+    updateRegionCard(region);
   });
 
   regions.on("region-in", (region) => {
     console.log("Entering region", region);
-  })
+  });
+
+  // regions.on('region-clicked', (region, e) => {
+  //   e.stopPropagation() // prevent triggering a click on the waveform
+  //   region.play()
+  // })  
+
+  // ws.on('region-play', function(region) {
+  //       region.once('out', function() {
+  //           wavesurfer.play(region.start);
+  //           wavesurfer.pause();
+  //       });
+  //   });  
 
   $("#add_section_button").click(function () {
     dragStopCallback = regions.enableDragSelection({
       color: "rgba(0, 200,255, 0.3)",
     });
-    $("#add_button").hide(100)
-    $("#add_section_help_1").show(100)
+    $("#add_button").hide(100);
+    $("#add_section_help_1").show(100);
 
     // toggle button color
     // let btn = $("#add_section_button")
@@ -123,7 +165,6 @@
     //   $("#add_section_button").removeClass("btn-success");
     //   dragStopCallback()
     // }
-
   });
 
   function renderRegionCards() {
@@ -135,35 +176,70 @@
     <div id="${region.id}">
       <div class="card">
         <div class="card-header">
-          <strong>Time frame</strong>: <span id="${region.id}-start">${secondsToTimestamp(region.start)}</span> - <span id="${region.id}-end">${secondsToTimestamp(region.end)}</span>, <strong>Duration</strong>: <span id="${region.id}-duration">${secondsToTimestamp(region.end - region.start)}</span>         
+          <strong>Time frame</strong>: <span id="${
+            region.id
+          }-start">${secondsToTimestamp(region.start)}</span> - <span id="${
+      region.id
+    }-end">${secondsToTimestamp(
+      region.end
+    )}</span>, <strong>Duration</strong>: <span id="${
+      region.id
+    }-duration">${secondsToTimestamp(region.end - region.start)}</span>         
         </div>
         <div class="card-body">
           <!--<h5 class="card-title">Title</h5>-->
           <p class="card-text">
             <div class="form-floating">
-              <input type="text" class="form-control" id="${region.id}-content" value="${region.content}" on>
-              <label for="${region.id}-content">Label</label>
+              <input type="text" class="form-control" id="${
+                region.id
+              }-content" value="${
+      region.content
+    }" oninput="updateRegionContent('${region.id}');">
+              <label for="${region.id}-content">Title</label>
             </div>
           </p>
           <div class="form-floating">
-            <textarea id="${region.id}-comment" class="form-control" aria-label="With textarea"></textarea>
+            <textarea id="${
+              region.id
+            }-comment" class="form-control" aria-label="With textarea"></textarea>
             <label for="${region.id}-comment">Comment</span>
           </div>
-          <a id="${region.id}-save" href="#" class="btn btn-primary" onclick="saveRegion(${region.id})">Save</a>
+          <a id="${
+            region.id
+          }-save" href="#" class="btn btn-primary" onclick="saveRegion('${
+      region.id
+    }');">Save</a>
         </div>
       </div>        
     </div>
-    ` );
+    `);
+  }
+
+  function updateRegionContent(region_id) {
+    let value = $(`#${region_id}-content`).val();
+    console.log(`updating ${region_id} with ${value}`);
+    for (var region of regions.regions) {
+      if (region.id == region_id) {
+        // region.content = value;
+        region.setOptions({content : value})
+        break;
+      }
+    }
   }
 
   function updateRegionCard(region) {
-    $(`#${region.id}-start`).text(secondsToTimestamp(region.start))
-    $(`#${region.id}-end`).text(secondsToTimestamp(region.end))
-    $(`#${region.id}-duration`).text(secondsToTimestamp(region.end - region.start))
+    $(`#${region.id}-start`).text(secondsToTimestamp(region.start));
+    $(`#${region.id}-end`).text(secondsToTimestamp(region.end));
+    $(`#${region.id}-duration`).text(
+      secondsToTimestamp(region.end - region.start)
+    );
   }
 
   function saveRegion(region_id) {
-    console.log(`saveRegin ${region_id}`)
+    console.log(`saveRegin ${region_id}`);
+    //TODO send save request
+    //TODO read save request response
+    //TODO on save ok     $("#add_button").show(100), $("#add_section_help_1").hide(100)
   }
 
   function secondsToTimestamp(seconds) {
