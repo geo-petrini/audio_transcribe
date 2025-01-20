@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-<!-- {% block title %}Flask dice ciao{% endblock %} -->
+{% block title %}AC - Play{% endblock %}
 {% block head_includes %}
 <script src="https://unpkg.com/wavesurfer.js@7"></script>
 <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
@@ -15,6 +15,11 @@
     <button id="add_section_button" type="button" class="btn" data-bs-toggle="button">Add section</button>
   </div>
 </div>
+<div class="row">
+  <div class="col">
+    <div id="regions-container"></div>
+  </div>
+</div>
 
 <script>
 
@@ -24,7 +29,6 @@
 
   let file_url = "{{url_for('default.uploads', filename=track.local_name)}}";
   var toggle_regions_create = false;
-
 
   const regions = WaveSurfer.Regions.create(); // Initialize regions plugin
   const timeline = WaveSurfer.Timeline.create({
@@ -65,8 +69,19 @@
   //   });
   var dragStopCallback = null
 
+  regions.on("region-created", (region) => {
+    // console.log("Created region", region);
+    renderRegionCard(region)
+  });
+
+  regions.on("region-update", (region) => {
+    // console.log("Updating region", region);
+    updateRegionCard(region)
+  });  
+
   regions.on("region-updated", (region) => {
-    console.log("Updated region", region);
+    // console.log("Updated region", region);
+    updateRegionCard(region)
   });
 
   regions.on("region-in", (region) => {
@@ -86,5 +101,46 @@
     }
 
   });  
+
+  function renderRegionCards(){
+    //TODO loop all regions.getRegions()
+  }
+
+  function renderRegionCard(region){
+    $( "#regions-container" ).append( `
+    <div id="${region.id}">
+      <div class="card">
+        <div class="card-header">
+          <div class="form-floating">
+            <input type="text" class="form-control" id="${region.id}-content" value="${region.content}">
+            <label for="${region.id}-content">Label</label>
+          </div>
+          
+        </div>
+        <div class="card-body">
+          <!--<h5 class="card-title">Title</h5>-->
+          <p class="card-text">Time frame: <span id="${region.id}-start">${secondsToTimestamp(region.start)}</span> - <span id="${region.id}-end">${secondsToTimestamp(region.end)}</span>, Duration: <span id="${region.id}-duration">${secondsToTimestamp(region.end - region.start)}</span></p>
+          <div class="form-floating">
+            <textarea id="${region.id}-comment" class="form-control" aria-label="With textarea"></textarea>
+            <label for="${region.id}-comment">Comment</span>
+          </div>
+          <a id="${region.id}-save" href="#" class="btn btn-primary">Save</a>
+        </div>
+      </div>        
+    </div>
+    ` );
+  }
+
+  function updateRegionCard(region){
+    $( `#${region.id}-start` ).text( secondsToTimestamp(region.start) )
+    $( `#${region.id}-end` ).text( secondsToTimestamp(region.end) )
+    $( `#${region.id}-duration` ).text( secondsToTimestamp(region.end - region.start) )
+  }
+
+  function secondsToTimestamp(seconds){
+    const date = new Date(null);
+    date.setSeconds(seconds);
+    return date.toISOString().slice(11, 19);
+  }
 </script>
 {% endblock %}
