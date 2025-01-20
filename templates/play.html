@@ -11,10 +11,24 @@
   <div class="col">
     <h2>Filename: {{track.name}}</h2>
     <div id="waveform"></div>
-    <button type="button" class="btn">Add comment</button>
-    <button id="add_section_button" type="button" class="btn" data-bs-toggle="button">Add section</button>
+    <div id="add_button" class="btn-group" role="group">
+      <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        Add
+      </button>
+      <ul class="dropdown-menu">
+        <li><button id="add_section_button" class="dropdown-item" href="#">Section</button></li>
+        <li><button id="add_comment_button" class="dropdown-item" href="#">Comment</button></li>
+      </ul>
+    </div>
+    <div id="add_section_help_1" style="display: none;">Drag on track to add and edit a new section</div>
+    <div id="add_section_help_2" style="display: none;">Drag track to edit the time frame</div>
+
+
+    <!-- <button type="button" class="btn">Add comment</button>
+    <button id="add_section_button" type="button" class="btn" data-bs-toggle="button">Add section</button> -->
   </div>
 </div>
+
 <div class="row">
   <div class="col">
     <div id="regions-container"></div>
@@ -72,12 +86,15 @@
   regions.on("region-created", (region) => {
     // console.log("Created region", region);
     renderRegionCard(region)
+    $("#add_section_help_1").hide(100)
+    $("#add_section_help_2").show(100)
+    dragStopCallback()
   });
 
   regions.on("region-update", (region) => {
     // console.log("Updating region", region);
     updateRegionCard(region)
-  });  
+  });
 
   regions.on("region-updated", (region) => {
     // console.log("Updated region", region);
@@ -89,55 +106,67 @@
   })
 
   $("#add_section_button").click(function () {
-    let btn = $("#add_section_button")
-    if (btn.hasClass("active")) {
-      $("#add_section_button").addClass("btn-success");
-      dragStopCallback = regions.enableDragSelection({
-        color: "rgba(0, 200,255, 0.3)",
-      });
-    } else {
-      $("#add_section_button").removeClass("btn-success");
-      dragStopCallback()
-    }
+    dragStopCallback = regions.enableDragSelection({
+      color: "rgba(0, 200,255, 0.3)",
+    });
+    $("#add_button").hide(100)
+    $("#add_section_help_1").show(100)
 
-  });  
+    // toggle button color
+    // let btn = $("#add_section_button")
+    // if (btn.hasClass("active")) {
+    //   $("#add_section_button").addClass("btn-success");
+    //   dragStopCallback = regions.enableDragSelection({
+    //     color: "rgba(0, 200,255, 0.3)",
+    //   });
+    // } else {
+    //   $("#add_section_button").removeClass("btn-success");
+    //   dragStopCallback()
+    // }
 
-  function renderRegionCards(){
+  });
+
+  function renderRegionCards() {
     //TODO loop all regions.getRegions()
   }
 
-  function renderRegionCard(region){
-    $( "#regions-container" ).append( `
+  function renderRegionCard(region) {
+    $("#regions-container").append(`
     <div id="${region.id}">
       <div class="card">
         <div class="card-header">
-          <div class="form-floating">
-            <input type="text" class="form-control" id="${region.id}-content" value="${region.content}">
-            <label for="${region.id}-content">Label</label>
-          </div>
-          
+          <strong>Time frame</strong>: <span id="${region.id}-start">${secondsToTimestamp(region.start)}</span> - <span id="${region.id}-end">${secondsToTimestamp(region.end)}</span>, <strong>Duration</strong>: <span id="${region.id}-duration">${secondsToTimestamp(region.end - region.start)}</span>         
         </div>
         <div class="card-body">
           <!--<h5 class="card-title">Title</h5>-->
-          <p class="card-text">Time frame: <span id="${region.id}-start">${secondsToTimestamp(region.start)}</span> - <span id="${region.id}-end">${secondsToTimestamp(region.end)}</span>, Duration: <span id="${region.id}-duration">${secondsToTimestamp(region.end - region.start)}</span></p>
+          <p class="card-text">
+            <div class="form-floating">
+              <input type="text" class="form-control" id="${region.id}-content" value="${region.content}" on>
+              <label for="${region.id}-content">Label</label>
+            </div>
+          </p>
           <div class="form-floating">
             <textarea id="${region.id}-comment" class="form-control" aria-label="With textarea"></textarea>
             <label for="${region.id}-comment">Comment</span>
           </div>
-          <a id="${region.id}-save" href="#" class="btn btn-primary">Save</a>
+          <a id="${region.id}-save" href="#" class="btn btn-primary" onclick="saveRegion(${region.id})">Save</a>
         </div>
       </div>        
     </div>
     ` );
   }
 
-  function updateRegionCard(region){
-    $( `#${region.id}-start` ).text( secondsToTimestamp(region.start) )
-    $( `#${region.id}-end` ).text( secondsToTimestamp(region.end) )
-    $( `#${region.id}-duration` ).text( secondsToTimestamp(region.end - region.start) )
+  function updateRegionCard(region) {
+    $(`#${region.id}-start`).text(secondsToTimestamp(region.start))
+    $(`#${region.id}-end`).text(secondsToTimestamp(region.end))
+    $(`#${region.id}-duration`).text(secondsToTimestamp(region.end - region.start))
   }
 
-  function secondsToTimestamp(seconds){
+  function saveRegion(region_id) {
+    console.log(`saveRegin ${region_id}`)
+  }
+
+  function secondsToTimestamp(seconds) {
     const date = new Date(null);
     date.setSeconds(seconds);
     return date.toISOString().slice(11, 19);
