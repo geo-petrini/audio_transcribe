@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+<table class="table">
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Title</th>
+        <th scope="col">Date</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+        {% for track in tracks %}
+      <tr>
+        <th scope="row">{{ loop.index }}</th>
+        <td>{{ track.name}}</td>
+        <td>{{ track.ts_add}}</td>
+        <td><a class="btn" href="{{ url_for('default.play', file=track.local_name) }}">Open</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endblock %}

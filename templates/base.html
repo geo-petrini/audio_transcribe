@@ -24,6 +24,7 @@
                 <a class="nav-link active" aria-current="page" href="/">Home</a>
               </li>
               <li class="nav-item"><a class="nav-link" href="{{ url_for('default.upload') }}">Upload</a></li>
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('default.list') }}">List</a></li>
               {% if not current_user.is_authenticated %}
               <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.login') }}">Login</a></li>
               <li class="nav-item"><a class="nav-link" href="{{ url_for('auth.signup') }}">Sign up</a></li>

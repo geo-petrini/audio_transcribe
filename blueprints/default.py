@@ -25,6 +25,10 @@ def about():
 def hello_anonimo():
     return url_for('hello', name='Alice')
 
+@app.route('/list')
+def list():
+    tracks = Track.query.all()
+    return render_template('list.html', tracks=tracks)
 
 @app.route('/play/<file>')
 def play(file):
@@ -70,7 +74,7 @@ def upload_form_post():
             db.session.commit()
         except Exception as e:
             current_app.logger.exception(f'Error saving file {file.filename} as {filepath}')
-        return redirect(url_for(f'default.play', file=local_filename))
+        return redirect(url_for('default.play', file=local_filename))
     return None
 
 
