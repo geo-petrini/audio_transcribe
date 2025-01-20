@@ -10,15 +10,21 @@
   <div class="col">
     <h2>Filename: {{track.name}}</h2>
     <div id="waveform"></div>
+    <button type="button" class="btn">Add comment</button>
+    <button id="add_section_button" type="button" class="btn" data-bs-toggle="button">Add section</button>
   </div>
 </div>
 
 <script>
+
+
   // import WaveSurfer from 'wavesurfer.js'
   // import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
 
   let file_url = "{{url_for('default.uploads', filename=track.local_name)}}";
-  //   const regions = RegionsPlugin.create()
+  var toggle_regions_create = false;
+  
+
   const regions = WaveSurfer.Regions.create(); // Initialize regions plugin
   const hover = WaveSurfer.Hover.create({
     lineColor: "#ffffff",
@@ -47,12 +53,28 @@
   //   ws.once("interaction", () => {
   //     ws.play();
   //   });
-  regions.enableDragSelection({
-    color: "rgba(0, 0,255, 0.5)",
-  });
+  var dragStopCallback = null
 
   regions.on("region-updated", (region) => {
     console.log("Updated region", region);
   });
+
+  regions.on("region-in", (region) => {
+    console.log("Entering region", region);
+  })
+
+  $("#add_section_button").click(function(){
+    let btn = $("#add_section_button")
+    if (btn.hasClass("active")){
+      $("#add_section_button").addClass("btn-success");
+        dragStopCallback = regions.enableDragSelection({
+          color: "rgba(0, 200,255, 0.3)",
+      });      
+    } else {
+      $("#add_section_button").removeClass("btn-success");
+      dragStopCallback()
+    }
+    
+  });  
 </script>
 {% endblock %}
