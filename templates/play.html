@@ -5,6 +5,7 @@
 <script src="https://unpkg.com/wavesurfer.js@7"></script>
 <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
 <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/hover.min.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/timeline.min.js"></script>
 {% endblock %} {% block content %}
 <div class="row">
   <div class="col">
@@ -23,16 +24,25 @@
 
   let file_url = "{{url_for('default.uploads', filename=track.local_name)}}";
   var toggle_regions_create = false;
-  
+
 
   const regions = WaveSurfer.Regions.create(); // Initialize regions plugin
+  const timeline = WaveSurfer.Timeline.create({
+    height: 11,
+    timeInterval: 10,
+    primaryLabelInterval: 60,
+    style: {
+      fontSize: '10px',
+      color: '#ffffff',
+    }
+  }); // Initialize timeline plugin
   const hover = WaveSurfer.Hover.create({
     lineColor: "#ffffff",
     lineWidth: 2,
     labelBackground: "#555",
     labelColor: "#fff",
     labelSize: "11px",
-  }); // Initialize regions plugin
+  }); // Initialize hover plugin
   const ws = WaveSurfer.create({
     container: "#waveform",
     waveColor: "rgb(83,83,83)",
@@ -47,7 +57,7 @@
     mediaControls: true,
     interact: true,
     dragToSeek: true,
-    plugins: [regions, hover],
+    plugins: [regions, hover, timeline],
   });
 
   //   ws.once("interaction", () => {
@@ -63,18 +73,18 @@
     console.log("Entering region", region);
   })
 
-  $("#add_section_button").click(function(){
+  $("#add_section_button").click(function () {
     let btn = $("#add_section_button")
-    if (btn.hasClass("active")){
+    if (btn.hasClass("active")) {
       $("#add_section_button").addClass("btn-success");
-        dragStopCallback = regions.enableDragSelection({
-          color: "rgba(0, 200,255, 0.3)",
-      });      
+      dragStopCallback = regions.enableDragSelection({
+        color: "rgba(0, 200,255, 0.3)",
+      });
     } else {
       $("#add_section_button").removeClass("btn-success");
       dragStopCallback()
     }
-    
+
   });  
 </script>
 {% endblock %}
