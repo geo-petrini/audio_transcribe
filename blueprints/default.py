@@ -5,7 +5,7 @@ import string
 from flask import render_template, url_for, Blueprint, flash, redirect, request, current_app, send_from_directory, jsonify
 
 from models.conn import db
-from models.models import Track, Section, Comment
+from models.models import Track, Region, Comment
 
 import modules.filechecker as filechecker
 
@@ -79,8 +79,25 @@ def upload_form_post():
 
 @app.route('/track/<file>/saveregion', methods=['POST'])
 def saveregion(file):
+    '''
+    {
+        start:region.start, -> region.start
+        end:region.end, -> region.end
+        id:region.id, -> region.internal_id
+        title:region.content -> region.title
+    }
+    '''
     current_app.logger.info(request.json)
     track = Track.query.filter(Track.local_name == file).first()
+    region = Region(
+        start = request.json.start,
+        end = request.json.start,
+        title = request.json.start,
+        internal_id = request.json.id
+    )
+    
+
+    
     #TODO save json data as Section
     #TODO save section comments
     return jsonify(request.json), 200
