@@ -2,7 +2,7 @@ import os
 import uuid
 import random
 import string
-from flask import render_template, url_for, Blueprint, flash, redirect, request, current_app, send_from_directory
+from flask import render_template, url_for, Blueprint, flash, redirect, request, current_app, send_from_directory, jsonify
 
 from models.conn import db
 from models.models import Track, Section, Comment
@@ -30,7 +30,7 @@ def list():
     tracks = Track.query.all()
     return render_template('list.html', tracks=tracks)
 
-@app.route('/play/<file>')
+@app.route('/track/<file>/play')
 def play(file):
     track = Track.query.filter(Track.local_name == file).first()
     return render_template('play.html', track=track)
@@ -77,14 +77,13 @@ def upload_form_post():
         return redirect(url_for('default.play', file=local_filename))
     return None
 
+@app.route('/track/<file>/saveregion', methods=['POST'])
+def saveregion(file):
+    current_app.logger.info(request.json)
+    track = Track.query.filter(Track.local_name == file).first()
+    #TODO save json data as Section
+    #TODO save section comments
+    return jsonify(request.json), 200
 
-
-# @app.route('/hello/<name>')
-# def hello(name):
-#     return render_template('hello.html', username=name)
-
-# @app.route('/hello/<int:post_id>', methods=['POST'])
-# def show_post(post_id):
-#     return f'Post ID: {post_id}'
 
 
