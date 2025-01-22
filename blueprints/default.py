@@ -2,7 +2,15 @@ import os
 import uuid
 import random
 import string
-from flask import render_template, url_for, Blueprint, flash, redirect, request, current_app, send_from_directory, jsonify
+from flask import render_template
+from flask import url_for
+from flask import Blueprint
+from flask import flash
+from flask import redirect
+from flask import request
+from flask import current_app
+from flask import send_from_directory
+from flask import jsonify
 
 from models.conn import db
 from models.models import Track, Region, Comment
@@ -89,15 +97,23 @@ def saveregion(file):
     '''
     current_app.logger.info(request.json)
     track = Track.query.filter(Track.local_name == file).first()
-    region = Region(
+    # TODO check if there is already a region with the same internal_id and track_id to update
+    region = Region.query.filter((Region.internal_id == request.json.get('id')) & (Region.track_id == track.id)).first()    
+    if region:
+        region.start = request.json.get('start')
+        region.end = request.json.get('end')
+        region.title = request.json.get('title')
+        db.session.commit()
+    else:  
+        region = Region(
         start = request.json.get('start'),
         end = request.json.get('end'),
         title = request.json.get('title'),
         internal_id = request.json.get('id'),
         track_id = track.id
-    )
-    db.session.add(region)
-    db.session.commit()
+        )
+        db.session.add(region)
+        db.session.commit()
     
 
     

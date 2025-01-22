@@ -129,12 +129,12 @@ head_includes %}
   });
 
   regions.on("region-updated", (region) => {
-    console.log("Updated region", region);
+    // console.log("Updated region", region);
     updateRegionCard(region);
   });
 
   regions.on("region-in", (region) => {
-    console.log("Entering region", region);
+    // console.log("Entering region", region);
   });
 
   $("#add_section_button").click(function () {
@@ -192,7 +192,7 @@ head_includes %}
 
   function updateRegionContent(region_id) {
     let value = $(`#${region_id}-content`).val();
-    console.log(`updating ${region_id} with ${value}`);
+    // console.log(`updating ${region_id} with ${value}`);
     let region = getRegion(region_id);
     if (region) {
       region.setOptions({ content: value });
@@ -227,11 +227,11 @@ head_includes %}
   }
 
   function saveRegion(region_id) {
-    console.log(`saveRegion ${region_id}`);
+    // console.log(`saveRegion ${region_id}`);
     let region = getRegion(region_id);
     if (region) {
       let payload = {start:region.start, end:region.end, id:region.id, title:getRegionTitle(region)}
-      console.log(`sending ${JSON.stringify(payload)}`)
+      // console.log(`sending ${JSON.stringify(payload)}`)
       $.ajax({
         url: "{{ url_for('default.saveregion', file=track.local_name)}}",
         type: "POST",
