@@ -217,6 +217,7 @@ head_includes %}
     console.log(`saveRegion ${region_id}`);
     let region = getRegionById(region_id);
     if (region) {
+      console.log(`processing ${JSON.stringify(region)}`)
       let payload = {start:region.start, end:region.end, id:region.id, title:region.content}
       console.log(`sending ${JSON.stringify(payload)}`)
       $.ajax({

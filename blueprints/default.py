@@ -90,11 +90,14 @@ def saveregion(file):
     current_app.logger.info(request.json)
     track = Track.query.filter(Track.local_name == file).first()
     region = Region(
-        start = request.json.start,
-        end = request.json.start,
-        title = request.json.start,
-        internal_id = request.json.id
+        start = request.json.get('start'),
+        end = request.json.get('end'),
+        title = request.json.get('title'),
+        internal_id = request.json.get('id'),
+        track_id = track.id
     )
+    db.session.add(region)
+    db.session.commit()
     
 
     
