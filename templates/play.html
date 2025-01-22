@@ -129,7 +129,7 @@ head_includes %}
   });
 
   regions.on("region-updated", (region) => {
-    // console.log("Updated region", region);
+    console.log("Updated region", region);
     updateRegionCard(region);
   });
 
@@ -193,7 +193,7 @@ head_includes %}
   function updateRegionContent(region_id) {
     let value = $(`#${region_id}-content`).val();
     console.log(`updating ${region_id} with ${value}`);
-    let region = getRegionById(region_id);
+    let region = getRegion(region_id);
     if (region) {
       region.setOptions({ content: value });
     }
@@ -214,12 +214,23 @@ head_includes %}
     );
   }
 
+  function getRegionTitle(region_id){
+    let region = getRegion(region_id);
+    if (region == null) {
+      return null
+    }
+
+    if ( $(region.content).is("div")){
+        return $(region.content).text()
+    }
+    return null
+  }
+
   function saveRegion(region_id) {
     console.log(`saveRegion ${region_id}`);
-    let region = getRegionById(region_id);
+    let region = getRegion(region_id);
     if (region) {
-      console.log(`processing ${JSON.stringify(region)}`)
-      let payload = {start:region.start, end:region.end, id:region.id, title:region.content}
+      let payload = {start:region.start, end:region.end, id:region.id, title:getRegionTitle(region)}
       console.log(`sending ${JSON.stringify(payload)}`)
       $.ajax({
         url: "{{ url_for('default.saveregion', file=track.local_name)}}",
@@ -243,7 +254,10 @@ head_includes %}
     }
   }
 
-  function getRegionById(region_id) {
+  function getRegion(region_id) {
+    if (region_id instanceof Object) {
+      return region_id
+    }
     for (var region of regions.regions) {
       if (region.id == region_id) {
         return region;
