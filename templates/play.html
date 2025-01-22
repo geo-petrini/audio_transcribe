@@ -95,6 +95,7 @@ head_includes %}
     waveColor: "rgb(83,83,83)",
     progressColor: "rgb(0,182,240)",
     url: file_url,
+    height: 90,
     // Set a bar width
     barWidth: 10,
     // Optionally, specify the spacing between bars
@@ -217,6 +218,7 @@ head_includes %}
     console.log(`saveRegion ${region_id}`);
     let region = getRegionById(region_id);
     if (region) {
+      console.log(`processing ${JSON.stringify(region)}`)
       let payload = {start:region.start, end:region.end, id:region.id, title:region.content}
       console.log(`sending ${JSON.stringify(payload)}`)
       $.ajax({

@@ -59,8 +59,9 @@ class Track(db.Model):
     def __str__(self):
         return f'{self.id}'
         
-class Section(db.Model):
+class Region(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    internal_id = db.Column(db.String(255), nullable=False)
     title = db.Column(db.String(255), nullable=False)
     ts_add = db.Column( db.Float(), default=datetime.now().timestamp() )
     start = db.Column( db.Integer() )
@@ -72,7 +73,7 @@ class Comment(db.Model):
     ts_add = db.Column( db.Float(), default=datetime.now().timestamp() )
     text = db.Column(db.String(1000) )
     track_id = db.Column(db.String(16), ForeignKey('track.id'))
-    section_id = db.Column(db.String(16), ForeignKey('section.id'))
+    region_id = db.Column(db.String(16), ForeignKey('region.id'))
 
     
 def init_db():  #vecchio stile
