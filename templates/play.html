@@ -242,9 +242,9 @@ head_includes %}
           console.log("Data: " + data + " Status: " + textStatus);
           $("#add_button").show(100)
           $("#add_section_help_1").hide(100)
-          //TODO clear form
-          //TODO hide form
-          //TODO reload region as read only
+          $("#add_section_help_2").hide(100)
+          $(`#${region_id}-content`).attr('disabled', true)
+          region.setOptions({drag:false, resize:false})
         },
         error: function (jqxhr, textStatus, errorThrown) {
           console.error("Status: " + textStatus + " Error: " + errorThrown);
