@@ -35,6 +35,7 @@ def hello_anonimo():
 
 @app.route('/list')
 def list():
+    # TODO load number of comments
     tracks = Track.query.all()
     return render_template('list.html', tracks=tracks)
 
