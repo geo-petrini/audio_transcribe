@@ -44,6 +44,19 @@ head_includes %}
 </div>
 
 <div class="row">
+  <div class="col-8">
+    <div id="description-container">
+      {% if description %}
+
+      {% else %}
+      <div class="form-floating">
+        <textarea class="form-control h-100" id="description-content" rows="20"></textarea>
+        <label for="description-content">Title</label>
+      </div>
+      <button class="btn btn-primary">Save description</button>
+      {% endif %}
+    </div>
+  </div>
   <div class="col">
     <div id="regions-container"></div>
   </div>
@@ -109,6 +122,9 @@ head_includes %}
     plugins: [regions, hover, timeline],
   });
 
+  // ----------- events begin ---------------
+
+  ws.on('ready', loadRegions);
   //   ws.once("interaction", () => {
   //     ws.play();
   //   });
@@ -117,9 +133,11 @@ head_includes %}
   regions.on("region-created", (region) => {
     // console.log("Created region", region);
     renderRegionCard(region);
-    $("#add_section_help_1").hide(100);
-    $("#add_section_help_2").show(100);
-    dragStopCallback();
+    // $("#add_section_help_1").hide(100);
+    // $("#add_section_help_2").show(100);
+    if (dragStopCallback){
+      dragStopCallback();
+    }
   });
 
   //TODO update to regions.on("region-update", updateRegionCard)
@@ -144,19 +162,51 @@ head_includes %}
     $("#add_button").hide(100);
     $("#add_section_help_1").show(100);
 
-    // toggle button color
-    // let btn = $("#add_section_button")
-    // if (btn.hasClass("active")) {
-    //   $("#add_section_button").addClass("btn-success");
-    //   dragStopCallback = regions.enableDragSelection({
-    //     color: "rgba(0, 200,255, 0.3)",
-    //   });
-    // } else {
-    //   $("#add_section_button").removeClass("btn-success");
-    //   dragStopCallback()
-    // }
   });
 
+  // $("#add_description_button").click(function () {
+  //   $("#add_button").hide(100);
+  //   $("#add_section_help_1").show(100);
+  // });
+  // TODO add event to highlight the comments for the current region
+  // ----------- events end ---------------
+
+  // ----------- functions begin ---------------
+
+  function loadRegions(){
+    $.ajax({
+        url: "{{ url_for('default.loadregions', file=track.local_name)}}",
+        type: "GET",
+        // data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (response, textStatus, jqxhr) {
+          // console.log("Data: " + response + " Status: " + textStatus);
+          let data = JSON.parse(JSON.stringify(response)); //may not be necessary as response is already a json
+          data.forEach( createRegion );
+          
+        },
+        error: function (jqxhr, textStatus, errorThrown) {
+          console.error("Status: " + textStatus + " Error: " + errorThrown);
+          //TODO display error
+        },
+      });
+  }
+
+  function createRegion(json){
+    // the creation of a new region triggers the event regions.on-create
+    // console.log(`creating new region from ${json}`)
+    region = regions.addRegion({
+              start: json.start,
+              end: json.end,
+              id: json.id,
+              color: "rgba(0, 200,255, 0.3)",
+              drag: false,
+              resize: true
+            })
+    region.setOptions( {content: json.title}) //for some reason setting the content during construction produces an html element that breaks the object
+    updateRegionCard(region)
+  }
   function renderRegionCards() {
     //TODO loop all regions.getRegions()
   }
@@ -196,14 +246,8 @@ head_includes %}
     let region = getRegion(region_id);
     if (region) {
       region.setOptions({ content: value });
+      // this triggers the region on update event
     }
-    // for (var region of regions.regions) {
-    //   if (region.id == region_id) {
-    //     // region.content = value;
-    //     region.setOptions({content : value})
-    //     break;
-    //   }
-    // }
   }
 
   function updateRegionCard(region) {
@@ -212,6 +256,11 @@ head_includes %}
     $(`#${region.id}-duration`).text(
       secondsToTimestamp(region.end - region.start)
     );
+
+    
+    if (region.drag == false){
+      $(`#${region.id}-content`).attr('disabled', true)
+    }
   }
 
   function getRegionTitle(region_id){
@@ -242,8 +291,10 @@ head_includes %}
           console.log("Data: " + data + " Status: " + textStatus);
           $("#add_button").show(100)
           $("#add_section_help_1").hide(100)
-          $(`#${region_id}-content`).attr('disabled', true)
-          region.setOptions({ drag: false, resize: false });
+          $("#add_section_help_2").hide(100)
+          // $(`#${region_id}-content`).attr('disabled', true)
+          region.setOptions({drag:false, resize:false})
+          updateRegionCard(region)
         },
         error: function (jqxhr, textStatus, errorThrown) {
           console.error("Status: " + textStatus + " Error: " + errorThrown);
@@ -270,5 +321,7 @@ head_includes %}
     date.setSeconds(seconds);
     return date.toISOString().slice(11, 19);
   }
+
+  // ----------- functions end ---------------
 </script>
 {% endblock %}
