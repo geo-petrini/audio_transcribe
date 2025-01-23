@@ -7,7 +7,14 @@ head_includes %}
 {% endblock %} {% block content %}
 <div class="row">
   <div class="col">
-    <h2>Filename: {{track.name}}</h2>
+    
+      <h2>Filename: {{track.name}}
+        <div class="spinner-border" role="status" id="waveform-spinner">
+          <span class="visually-hidden">Loading...</span>
+        </div>
+      </h2>
+    
+
     <div id="waveform"></div>
     <div id="add_button" class="btn-group" role="group">
       <button
@@ -124,10 +131,14 @@ head_includes %}
 
   // ----------- events begin ---------------
 
-  ws.on('ready', loadRegions);
+  ws.on('ready', () => {
+    loadRegions()
+    $("#waveform-spinner").hide()
+  });
   //   ws.once("interaction", () => {
   //     ws.play();
   //   });
+
   var dragStopCallback = null;
 
   regions.on("region-created", (region) => {
