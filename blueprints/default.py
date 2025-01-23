@@ -85,6 +85,18 @@ def upload_form_post():
         return redirect(url_for('default.play', file=local_filename))
     return None
 
+@app.route('/track/<file>/loadregions', methods=['GET'])
+def loadregions(file):
+    track = Track.query.filter(Track.local_name == file).first()
+    # TODO check if there is already a region with the same internal_id and track_id to update
+    regions = Region.query.filter(Region.track_id == track.id).order_by(Region.ts_add).all()
+    out = []
+    for region in regions:
+        current_app.logger.debug(f'serializing region: {region.to_json()}')
+        out.append( region.to_dict() )
+        
+    return jsonify(out)
+
 @app.route('/track/<file>/saveregion', methods=['POST'])
 def saveregion(file):
     '''
@@ -97,7 +109,8 @@ def saveregion(file):
     '''
     current_app.logger.info(request.json)
     track = Track.query.filter(Track.local_name == file).first()
-    # TODO check if there is already a region with the same internal_id and track_id to update
+    # DONE check if there is already a region with the same internal_id and track_id to update
+    # TODO handle discrepancies betweeb internal_id and id
     region = Region.query.filter((Region.internal_id == request.json.get('id')) & (Region.track_id == track.id)).first()    
     if region:
         region.start = request.json.get('start')
