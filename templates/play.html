@@ -163,7 +163,7 @@ head_includes %}
         contentType: "application/json; charset=utf-8",
         dataType: "json",
         success: function (response, textStatus, jqxhr) {
-          console.log("Data: " + response + " Status: " + textStatus);
+          // console.log("Data: " + response + " Status: " + textStatus);
           let data = JSON.parse(JSON.stringify(response)); //may not be necessary as response is already a json
           data.forEach( createRegion );
           
@@ -276,7 +276,7 @@ head_includes %}
           $("#add_section_help_2").hide(100)
           // $(`#${region_id}-content`).attr('disabled', true)
           region.setOptions({drag:false, resize:false})
-          updateRegionCard()
+          updateRegionCard(region)
         },
         error: function (jqxhr, textStatus, errorThrown) {
           console.error("Status: " + textStatus + " Error: " + errorThrown);

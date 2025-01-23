@@ -89,7 +89,7 @@ def upload_form_post():
 def loadregions(file):
     track = Track.query.filter(Track.local_name == file).first()
     # TODO check if there is already a region with the same internal_id and track_id to update
-    regions = Region.query.filter(Region.track_id == track.id).order_by(Region.ts_add).all()
+    regions = Region.query.filter(Region.track_id == track.id).order_by(Region.start).all()
     out = []
     for region in regions:
         current_app.logger.debug(f'serializing region: {region.to_json()}')
