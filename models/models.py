@@ -1,5 +1,7 @@
 from datetime import datetime
+import json
 from flask_login import UserMixin
+from flask import jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.conn import db
 from sqlalchemy import ForeignKey, inspect
@@ -62,11 +64,26 @@ class Track(db.Model):
 class Region(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     internal_id = db.Column(db.String(255), nullable=False)
-    title = db.Column(db.String(255), nullable=False)
+    title = db.Column(db.String(255))
     ts_add = db.Column( db.Float(), default=datetime.now().timestamp() )
     start = db.Column( db.Integer() )
     end = db.Column( db.Integer() )
     track_id = db.Column(db.String(16), ForeignKey('track.id'))
+    
+    def to_json(self):
+        return json.dumps( self.to_dict() )
+    
+    def to_dict(self):
+        out = {
+            'id' : self.id,
+            'internal_id' : self.internal_id,
+            'title' : self.title,
+            'start' : self.start,
+            'end' : self.end,
+            'ts': self.ts_add
+        }
+        return out        
+        
 
 class Comment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
