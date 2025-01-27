@@ -1,6 +1,4 @@
 
-// import WaveSurfer from 'wavesurfer.js'
-// import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.esm.js'
 $(document).ready(function () {
     var dragStopCallback = null;
     // let file_url = "{{url_for('default.track', filename=track.local_name)}}";
@@ -42,6 +40,10 @@ $(document).ready(function () {
         plugins: [regions, hover, timeline],
     });
 
+    ws.on('ready', () => {
+        loadRegions()
+        $("#waveform-spinner").hide()
+      });
 
     regions.on("region-created", (region) => {
         // console.log("Created region", region);
@@ -63,7 +65,7 @@ $(document).ready(function () {
     });
     
     regions.on("region-in", (region) => {
-        console.log("Entering region", region);
+        // console.log("Entering region", region);
     });    
 });
 
@@ -108,6 +110,42 @@ function getFileUrl(){
 
 }
 
+function createRegion(json){
+    // the creation of a new region triggers the event regions.on-create
+    // console.log(`creating new region from ${json}`)
+    region = regions.addRegion({
+              start: json.start,
+              end: json.end,
+              id: json.id,
+              color: "rgba(0, 200,255, 0.3)",
+              drag: false,
+              resize: true
+            })
+    region.setOptions( {content: json.title}) //for some reason setting the content during construction produces an html element that breaks the object
+    updateRegionCard(region)
+  }
+
+function loadRegions(){
+    $.ajax({
+        // url: "{{ url_for('default.loadregions', file=track.local_name)}}",
+        url: getFileUrl().concat('/loadregions'),
+        type: "GET",
+        // data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (response, textStatus, jqxhr) {
+          // console.log("Data: " + response + " Status: " + textStatus);
+          let data = JSON.parse(JSON.stringify(response)); //may not be necessary as response is already a json
+          data.forEach( createRegion );
+          
+        },
+        error: function (jqxhr, textStatus, errorThrown) {
+          console.error("Status: " + textStatus + " Error: " + errorThrown);
+          //TODO display error
+        },
+      });
+  }
+
 function renderRegionCards() {
     //TODO loop all regions.getRegions()
 }
@@ -143,56 +181,80 @@ function renderRegionCard(region) {
 
 function updateRegionContent(region_id) {
     let value = $(`#${region_id}-content`).val();
-    console.log(`updating ${region_id} with ${value}`);
-    let region = getRegionById(region_id);
+    // console.log(`updating ${region_id} with ${value}`);
+    let region = getRegion(region_id);
     if (region) {
-        region.setOptions({ content: value });
+      region.setOptions({ content: value });
+      // this triggers the region on update event
     }
-    // for (var region of regions.regions) {
-    //   if (region.id == region_id) {
-    //     // region.content = value;
-    //     region.setOptions({content : value})
-    //     break;
-    //   }
-    // }
-}
+  }
 
-function updateRegionCard(region) {
+  function updateRegionCard(region) {
     $(`#${region.id}-start`).text(secondsToTimestamp(region.start));
     $(`#${region.id}-end`).text(secondsToTimestamp(region.end));
     $(`#${region.id}-duration`).text(
-        secondsToTimestamp(region.end - region.start)
+      secondsToTimestamp(region.end - region.start)
     );
-}
 
-function saveRegion(region_id) {
-    console.log(`saveRegion ${region_id}`);
-    let region = getRegionById(region_id);
-    if (region) {
-        console.log(`processing ${JSON.stringify(region)}`)
-        let payload = { start: region.start, end: region.end, id: region.id, title: region.content }
-        console.log(`sending ${JSON.stringify(payload)}`)
-        $.ajax({
-            url: "{{ url_for('default.saveregion', file=track.local_name)}}",
-            type: "POST",
-            data: JSON.stringify(payload),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json",
-            success: function (data, textStatus, jqxhr) {
-                console.log("Data: " + data + " Status: " + textStatus);
-                $("#add_button").show(100)
-                $("#add_section_help_1").hide(100)
-                //TODO clear form
-                //TODO hide form
-                //TODO reload region as read only
-            },
-            error: function (jqxhr, textStatus, errorThrown) {
-                console.error("Status: " + textStatus + " Error: " + errorThrown);
-                //TODO display error
-            },
-        });
+    
+    if (region.drag == false){
+      $(`#${region.id}-content`).attr('disabled', true)
     }
-}
+  }
+
+  function getRegionTitle(region_id){
+    let region = getRegion(region_id);
+    if (region == null) {
+      return null
+    }
+
+    if ( $(region.content).is("div")){
+        return $(region.content).text()
+    }
+    return null
+  }  
+
+  function saveRegion(region_id) {
+    // console.log(`saveRegion ${region_id}`);
+    let region = getRegion(region_id);
+    if (region) {
+      let payload = {start:region.start, end:region.end, id:region.id, title:getRegionTitle(region)}
+      // console.log(`sending ${JSON.stringify(payload)}`)
+      $.ajax({
+        // url: "{{ url_for('default.saveregion', file=track.local_name)}}",
+        url: getFileUrl().concat('/saveregion'),
+        type: "POST",
+        data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        success: function (data, textStatus, jqxhr) {
+          console.log("Data: " + data + " Status: " + textStatus);
+          $("#add_button").show(100)
+          $("#add_section_help_1").hide(100)
+          $("#add_section_help_2").hide(100)
+          // $(`#${region_id}-content`).attr('disabled', true)
+          region.setOptions({drag:false, resize:false})
+          updateRegionCard(region)
+        },
+        error: function (jqxhr, textStatus, errorThrown) {
+          console.error("Status: " + textStatus + " Error: " + errorThrown);
+          //TODO display error
+        },
+      });
+    }
+  }
+
+function getRegion(region_id) {
+    if (region_id instanceof Object) {
+      return region_id
+    }
+    for (var region of regions.regions) {
+      if (region.id == region_id) {
+        return region;
+      }
+    }
+    return null;
+  }
 
 function getRegionById(region_id) {
     for (var region of regions.regions) {
