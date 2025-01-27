@@ -1,1 +1,15 @@
-/*emtpy*/
+/* https://wavesurfer.xyz/examples/?styling.js */
+#waveform ::part(region) {
+    color: #ffffff !important;
+    text-shadow: 1px 1px 2px #838383;
+}
+
+#waveform ::part(region-handle-right) {
+    border-right-width: 4px !important;
+    border-right-color: #0000ff !important;
+}
+
+#waveform ::part(region-handle-left) {
+    border-left-width: 4px !important;
+    border-left-color: #0000ff !important;
+}

@@ -35,8 +35,8 @@ def play(file):
     track = Track.query.filter(Track.local_name == file).first()
     return render_template('play.html', track=track)
 
-@app.route('/uploads/<path:filename>')
-def uploads(filename):
+@app.route('/track/<path:filename>')
+def track(filename):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
 
 @app.route('/upload', methods=['GET'])
