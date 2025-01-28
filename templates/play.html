@@ -23,7 +23,7 @@
     
 
     <div id="waveform"></div>
-    <div id="add_button" class="btn-group" role="group">
+    <!-- <div id="add_button" class="btn-group" role="group">
       <button
         type="button"
         class="btn btn-primary dropdown-toggle"
@@ -44,7 +44,10 @@
           </button>
         </li>
       </ul>
-    </div>
+    </div> -->
+    <button id="add_section_button" class="btn btn-primary float-end" href="#">
+      Section
+    </button>    
     <div id="add_section_help_1" style="display: none">
       Drag on track to add and edit a new section
     </div>
@@ -65,9 +68,9 @@
       {% else %}
       <div class="form-floating">
         <textarea class="form-control h-100" id="description-content" rows="20"></textarea>
-        <label for="description-content">Title</label>
+        <label for="description-content">Description</label>
       </div>
-      <button class="btn btn-primary">Save description</button>
+      <button id="add_description_button" class="btn btn-primary">Save description</button>
       {% endif %}
     </div>
   </div>

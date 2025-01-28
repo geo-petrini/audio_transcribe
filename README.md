@@ -21,4 +21,7 @@
 - add tracking / watch 
     - with notifications on changes
 - add favourite
+- add some visual clue regarding description save as currently it just saves but the user is not informed
+
+DONE
 - add text to the track (model reference already present)

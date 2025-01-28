@@ -86,8 +86,8 @@ def upload_form_post():
         return redirect(url_for('default.play', file=local_filename))
     return None
 
-@app.route('/track/<file>/loadregions', methods=['GET'])
-def loadregions(file):
+@app.route('/track/<file>/regions', methods=['GET'])
+def track_regions_load(file):
     track = Track.query.filter(Track.local_name == file).first()
     # TODO check if there is already a region with the same internal_id and track_id to update
     regions = Region.query.filter(Region.track_id == track.id).order_by(Region.start).all()
@@ -98,8 +98,8 @@ def loadregions(file):
         
     return jsonify(out)
 
-@app.route('/track/<file>/saveregion', methods=['POST'])
-def saveregion(file):
+@app.route('/track/<file>/region', methods=['POST'])
+def track_region_save(file):
     '''
     {
         start:region.start, -> region.start
@@ -128,12 +128,29 @@ def saveregion(file):
         )
         db.session.add(region)
         db.session.commit()
-    
 
-    
     #TODO save json data as Section
     #TODO save section comments
-    return jsonify(request.json), 200
+    return 'saved', 200
 
 
+@app.route('/track/<file>/description', methods=['GET'])
+def track_description_load(file):
+    track = Track.query.filter(Track.local_name == file).first()   
+    comment = Comment.query.filter( (Comment.track_id == track.id)).first()       
+    if comment:
+        return jsonify( {'text':comment.text})
+    else:
+        return 'no data', 404
 
+@app.route('/track/<file>/description', methods=['POST'])
+def track_description_save(file):
+    current_app.logger.info(request.json)
+    track = Track.query.filter(Track.local_name == file).first()   
+    comment = Comment(
+        track_id = track.id,
+        text = request.json.get('text')
+    ) 
+    db.session.add(comment)
+    db.session.commit()
+    return 'saved', 200

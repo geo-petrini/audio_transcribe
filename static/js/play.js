@@ -75,14 +75,24 @@ $(document).ready(function () {
 //     ws.play();
 //   });
 
+
+// manage events on buttons
 $(document).ready(function () {
   $("#add_section_button").click(function () {
     dragStopCallback = regions.enableDragSelection({
       color: "rgba(0, 200,255, 0.3)",
     });
-    $("#add_button").hide(100);
+    // $("#add_button").hide(100);
+    $("#add_section_button").hide(100);
     // $("#add_section_help_1").show(100);
   });
+
+
+  $("#add_description_button").click(function () {
+    saveDescription()
+  });
+
+  loadDescription()
 });
 
 function getFileUrl() {
@@ -109,26 +119,6 @@ function createRegion(json) {
   });
   region.setOptions({ content: json.title }); //for some reason setting the content during construction produces an html element that breaks the object
   updateRegionCard(region);
-}
-
-function loadRegions() {
-  $.ajax({
-    // url: "{{ url_for('default.loadregions', file=track.local_name)}}",
-    url: getFileUrl().concat("/loadregions"),
-    type: "GET",
-    // data: JSON.stringify(payload),
-    contentType: "application/json; charset=utf-8",
-    dataType: "json",
-    success: function (response, textStatus, jqxhr) {
-      // console.log("Data: " + response + " Status: " + textStatus);
-      let data = JSON.parse(JSON.stringify(response)); //may not be necessary as response is already a json
-      data.forEach(createRegion);
-    },
-    error: function (jqxhr, textStatus, errorThrown) {
-      console.error("Status: " + textStatus + " Error: " + errorThrown);
-      //TODO display error
-    },
-  });
 }
 
 function renderRegionCards() {
@@ -199,6 +189,26 @@ function getRegionTitle(region_id) {
   return null;
 }
 
+function loadRegions() {
+  $.ajax({
+    // url: "{{ url_for('default.loadregions', file=track.local_name)}}",
+    url: getFileUrl().concat("/regions"),
+    type: "GET",
+    // data: JSON.stringify(payload),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function (response, textStatus, jqxhr) {
+      // console.log("Data: " + response + " Status: " + textStatus);
+      let data = JSON.parse(JSON.stringify(response)); //may not be necessary as response is already a json
+      data.forEach(createRegion);
+    },
+    error: function (jqxhr, textStatus, errorThrown) {
+      console.error("Status: " + textStatus + " Error: " + errorThrown);
+      //TODO display error
+    },
+  });
+}
+
 function saveRegion(region_id) {
   // console.log(`saveRegion ${region_id}`);
   let region = getRegion(region_id);
@@ -212,16 +222,17 @@ function saveRegion(region_id) {
     // console.log(`sending ${JSON.stringify(payload)}`)
     $.ajax({
       // url: "{{ url_for('default.saveregion', file=track.local_name)}}",
-      url: getFileUrl().concat("/saveregion"),
+      url: getFileUrl().concat("/region"),
       type: "POST",
       data: JSON.stringify(payload),
       contentType: "application/json; charset=utf-8",
       dataType: "json",
       success: function (data, textStatus, jqxhr) {
         console.log("Data: " + data + " Status: " + textStatus);
-        $("#add_button").show(100);
-        $("#add_section_help_1").hide(100);
-        $("#add_section_help_2").hide(100);
+        $("#add_section_button").show(100);
+        // $("#add_button").show(100);
+        // $("#add_section_help_1").hide(100);
+        // $("#add_section_help_2").hide(100);
         // $(`#${region_id}-content`).attr('disabled', true)
         region.setOptions({ drag: false, resize: false });
         updateRegionCard(region);
@@ -259,4 +270,41 @@ function secondsToTimestamp(seconds) {
   const date = new Date(null);
   date.setSeconds(seconds);
   return date.toISOString().slice(11, 19);
+}
+
+function loadDescription(){
+  $.ajax({
+    url: getFileUrl().concat("/description"),
+    type: "GET",
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function (response, textStatus, jqxhr) {
+      // console.log("Data: " + response + " Status: " + textStatus);
+      let data = JSON.parse(JSON.stringify(response)); //may not be necessary as response is already a json
+      $('#description-content').val( data.text )
+    },
+    error: function (jqxhr, textStatus, errorThrown) {
+      console.error("Status: " + textStatus + " Error: " + errorThrown);
+      //TODO display error
+    },
+  });  
+}
+
+function saveDescription(){
+  let payload = {text : $('#description-content').val() }
+  $.ajax({
+    // url: "{{ url_for('default.saveregion', file=track.local_name)}}",
+    url: getFileUrl().concat("/description"),
+    type: "POST",
+    data: JSON.stringify(payload),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function (data, textStatus, jqxhr) {
+      console.log("Data: " + data + " Status: " + textStatus);
+    },
+    error: function (jqxhr, textStatus, errorThrown) {
+      console.error("Status: " + textStatus + " Error: " + errorThrown);
+      //TODO display error
+    },
+  });
 }
