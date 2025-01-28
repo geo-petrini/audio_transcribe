@@ -154,3 +154,40 @@ def track_description_save(file):
     db.session.add(comment)
     db.session.commit()
     return 'saved', 200
+
+
+@app.route('/track/<file>/region/<regionid>/comment/<commentid>', methods=['GET'])
+def track_region_comment(file, regionid, commentid):
+    pass
+
+@app.route('/comment/<commentid>', methods=['GET'])
+def comment(commentid):
+    comment = Comment.query.filter( (Comment.id == commentid)).first()       
+    if comment:
+        return jsonify( {'text':comment.text})
+    else:
+        return 'no data', 404
+
+@app.route('/track/<file>/region/<regionid>/comments', methods=['GET'])
+def track_region_comments_load(file, regionid):
+    out = []
+    track = Track.query.filter(Track.local_name == file).first()   
+    region = Region.query.filter((Region.internal_id == regionid) & (Region.track_id == track.id)).first()  
+    comments = Comment.query.filter( (Comment.region_id == region.id)).all()       
+    if comments:
+        for comment in comments:
+            out.append( comment.to_dict() )
+        return jsonify( out )
+    else:
+        return 'no data', 404
+
+@app.route('/track/<file>/region/<regionid>/comment', methods=['POST'])
+def track_region_comment_save(file, regionid):
+    track = Track.query.filter(Track.local_name == file).first()
+    region = Region.query.filter((Region.internal_id == regionid) & (Region.track_id == track.id)).first()  
+    comment = Comment(
+        region_id = region.id,
+        text = request.json.get('text')
+    ) 
+    db.session.add(comment)
+    db.session.commit()

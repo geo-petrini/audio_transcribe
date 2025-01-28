@@ -91,6 +91,20 @@ class Comment(db.Model):
     text = db.Column(db.String(1000) )
     track_id = db.Column(db.String(16), ForeignKey('track.id'))
     region_id = db.Column(db.String(16), ForeignKey('region.id'))
+    
+    def to_json(self):
+        return json.dumps( self.to_dict() )
+    
+    def to_dict(self):
+        out = {
+            'id' : self.id,
+            'text' : self.text,
+            'track_id' : self.track_id,
+            'region_id' : self.region_id,
+            'ts': self.ts_add
+        }
+        return out        
+            
 
     
 def init_db():  #vecchio stile
