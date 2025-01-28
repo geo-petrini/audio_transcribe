@@ -145,7 +145,7 @@ def track_description_save(file):
     ) 
     db.session.add(comment)
     db.session.commit()
-    return 'saved', 200
+    return jsonify( {'id':comment.id }), 200
 
 
 @app.route('/track/<file>/region/<regionid>/comment/<commentid>', methods=['GET'])
@@ -164,8 +164,7 @@ def comment(commentid):
 def track_region_comments_load(file, regionid):
     out = []
     track = Track.query.filter(Track.local_name == file).first()   
-    # region = Region.query.filter((Region.native_id == regionid) & (Region.track_id == track.id)).first()  
-    region = Region.query.filter(Region.id == regionid).first()  
+    region = Region.query.filter((Region.native_id == regionid) & (Region.track_id == track.id)).first()  
     comments = Comment.query.filter( (Comment.region_id == region.id)).all()       
     if comments:
         for comment in comments:
@@ -184,4 +183,4 @@ def track_region_comment_save(file, regionid):
     ) 
     db.session.add(comment)
     db.session.commit()
-    return 'saved', 200
+    return jsonify( {'id':comment.id }), 200

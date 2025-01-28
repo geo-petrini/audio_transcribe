@@ -118,6 +118,7 @@ function createRegion(json) {
     resize: true,
   });
   region.setOptions({ content: json.title }); //for some reason setting the content during construction produces an html element that breaks the object
+  loadComments(region);
   updateRegionCard(region);
 }
 
@@ -143,9 +144,11 @@ function renderRegionCard(region) {
               <label for="${region.id}-content">Title</label>
             </div>
           </p>
-          <div class="form-floating">
-            <textarea id="${region.id}-comment" class="form-control" aria-label="With textarea"></textarea>
-            <label for="${region.id}-comment">Comment</span>
+          <div id="${region.id}-comments-container">
+            <div class="form-floating">
+              <textarea id="${region.id}-comment" class="form-control" aria-label="With textarea"></textarea>
+              <label for="${region.id}-comment">Comment</span>
+            </div>
           </div>
           <a id="${region.id}-save" href="#" class="btn btn-primary" onclick="saveRegion('${region.id}');">Save Section <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 18l-4.2 1.8q-1 .425-1.9-.162T5 17.975V5q0-.825.588-1.412T7 3h5q.425 0 .713.288T13 4t-.288.713T12 5H7v12.95l5-2.15l5 2.15V12q0-.425.288-.712T18 11t.713.288T19 12v5.975q0 1.075-.9 1.663t-1.9.162zm0-13H7h6zm5 2h-1q-.425 0-.712-.288T15 6t.288-.712T16 5h1V4q0-.425.288-.712T18 3t.713.288T19 4v1h1q.425 0 .713.288T21 6t-.288.713T20 7h-1v1q0 .425-.288.713T18 9t-.712-.288T17 8z"/></svg></span></a>
           <a id="${region.id}-save-comment" href="#" class="btn btn-primary float-end" onclick="saveComment('${region.id}');">Save Comment <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m6 17l-2.15 2.15q-.25.25-.55.125T3 18.8V5q0-.825.588-1.412T5 3h12q.825 0 1.413.588T19 5v4.025q0 .425-.288.7T18 10t-.712-.288T17 9V5H5v10h6q.425 0 .713.288T12 16t-.288.713T11 17zm2-8h6q.425 0 .713-.288T15 8t-.288-.712T14 7H8q-.425 0-.712.288T7 8t.288.713T8 9m0 4h3q.425 0 .713-.288T12 12t-.288-.712T11 11H8q-.425 0-.712.288T7 12t.288.713T8 13m9 4h-2q-.425 0-.712-.288T14 16t.288-.712T15 15h2v-2q0-.425.288-.712T18 12t.713.288T19 13v2h2q.425 0 .713.288T22 16t-.288.713T21 17h-2v2q0 .425-.288.713T18 20t-.712-.288T17 19zM5 15V5z"/></svg></span></a>
@@ -176,6 +179,8 @@ function updateRegionCard(region) {
     $(`#${region.id}-content`).attr("disabled", true);
     $(`#${region.id}-content`).val( getRegionTitle(region) )
   }
+
+  resetCommentInputField(region)
 }
 
 function getRegionTitle(region_id) {
@@ -310,7 +315,6 @@ function saveDescription(){
   });
 }
 
-
 function loadComments(region){
   $.ajax({
     // url: "{{ url_for('default.loadregions', file=track.local_name)}}",
@@ -323,6 +327,7 @@ function loadComments(region){
       // console.log("Data: " + response + " Status: " + textStatus);
       let data = JSON.parse(JSON.stringify(response)); //may not be necessary as response is already a json
       // TODO add comments to region object and then call updateRegionCard to display them
+      region.data = {'comments':data}
       data.forEach(updateRegionCard);
     },
     error: function (jqxhr, textStatus, errorThrown) {
@@ -347,6 +352,11 @@ function saveComment(region){
       dataType: "json",
       success: function (data, textStatus, jqxhr) {
         console.log("Data: " + data + " Status: " + textStatus);
+        //TODO pass the comment id from data
+        $(`#${region.id}-comment`).data('saved', true)
+
+        region.data.comments
+        updateRegionCard(region)
       },
       error: function (jqxhr, textStatus, errorThrown) {
         console.error("Status: " + textStatus + " Error: " + errorThrown);
@@ -356,3 +366,22 @@ function saveComment(region){
     
   }
 }
+
+function resetCommentInputField(region){
+  region = getRegion(region)
+  if (region) {
+    let saved = $(`#${region.id}-comment`).data('saved')
+    if (saved){
+      let container = $(`#${region.id}-comments-container`)
+      let comment = $(`#${region.id}-comment`).val()
+      $(`#${region.id}-comment`).val('')
+      container.append(
+        `<p>${comment}</p>`
+      )
+    }
+    return true
+  } else {
+    return false
+  }
+}
+
