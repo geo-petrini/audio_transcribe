@@ -89,7 +89,7 @@ def upload_form_post():
 @app.route('/track/<file>/regions', methods=['GET'])
 def track_regions_load(file):
     track = Track.query.filter(Track.local_name == file).first()
-    # TODO check if there is already a region with the same internal_id and track_id to update
+    # TODO check if there is already a region with the same native_id and track_id to update
     regions = Region.query.filter(Region.track_id == track.id).order_by(Region.start).all()
     out = []
     for region in regions:
@@ -100,19 +100,11 @@ def track_regions_load(file):
 
 @app.route('/track/<file>/region', methods=['POST'])
 def track_region_save(file):
-    '''
-    {
-        start:region.start, -> region.start
-        end:region.end, -> region.end
-        id:region.id, -> region.internal_id
-        title:region.content -> region.title
-    }
-    '''
     current_app.logger.info(request.json)
     track = Track.query.filter(Track.local_name == file).first()
-    # DONE check if there is already a region with the same internal_id and track_id to update
-    # TODO handle discrepancies betweeb internal_id and id
-    region = Region.query.filter((Region.internal_id == request.json.get('id')) & (Region.track_id == track.id)).first()    
+    # DONE check if there is already a region with the same native_id and track_id to update
+    # TODO handle discrepancies betweeb native_id and id
+    region = Region.query.filter((Region.native_id == request.json.get('id')) & (Region.track_id == track.id)).first()    
     if region:
         region.start = request.json.get('start')
         region.end = request.json.get('end')
@@ -123,7 +115,7 @@ def track_region_save(file):
         start = request.json.get('start'),
         end = request.json.get('end'),
         title = request.json.get('title'),
-        internal_id = request.json.get('id'),
+        native_id = request.json.get('native_id'),
         track_id = track.id
         )
         db.session.add(region)
@@ -172,7 +164,8 @@ def comment(commentid):
 def track_region_comments_load(file, regionid):
     out = []
     track = Track.query.filter(Track.local_name == file).first()   
-    region = Region.query.filter((Region.internal_id == regionid) & (Region.track_id == track.id)).first()  
+    # region = Region.query.filter((Region.native_id == regionid) & (Region.track_id == track.id)).first()  
+    region = Region.query.filter(Region.id == regionid).first()  
     comments = Comment.query.filter( (Comment.region_id == region.id)).all()       
     if comments:
         for comment in comments:
@@ -184,10 +177,11 @@ def track_region_comments_load(file, regionid):
 @app.route('/track/<file>/region/<regionid>/comment', methods=['POST'])
 def track_region_comment_save(file, regionid):
     track = Track.query.filter(Track.local_name == file).first()
-    region = Region.query.filter((Region.internal_id == regionid) & (Region.track_id == track.id)).first()  
+    region = Region.query.filter((Region.native_id == regionid) & (Region.track_id == track.id)).first()  
     comment = Comment(
         region_id = region.id,
         text = request.json.get('text')
     ) 
     db.session.add(comment)
     db.session.commit()
+    return 'saved', 200

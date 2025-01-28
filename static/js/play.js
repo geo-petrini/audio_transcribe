@@ -112,7 +112,7 @@ function createRegion(json) {
   region = regions.addRegion({
     start: json.start,
     end: json.end,
-    id: json.id,
+    id: json.native_id,
     color: "rgba(0, 200,255, 0.3)",
     drag: false,
     resize: true,
@@ -217,7 +217,7 @@ function saveRegion(region_id) {
     let payload = {
       start: region.start,
       end: region.end,
-      id: region.id,
+      native_id: region.id, //map the region.id as native_id
       title: getRegionTitle(region),
     };
     // console.log(`sending ${JSON.stringify(payload)}`)
@@ -332,21 +332,27 @@ function loadComments(region){
   });
 }
 
-function saveComment(){
-  let payload = {text : comment }
-  $.ajax({
-    // url: "{{ url_for('default.saveregion', file=track.local_name)}}",
-    url: getFileUrl().concat("/region/", region.id, '/comment'),
-    type: "POST",
-    data: JSON.stringify(payload),
-    contentType: "application/json; charset=utf-8",
-    dataType: "json",
-    success: function (data, textStatus, jqxhr) {
-      console.log("Data: " + data + " Status: " + textStatus);
-    },
-    error: function (jqxhr, textStatus, errorThrown) {
-      console.error("Status: " + textStatus + " Error: " + errorThrown);
-      //TODO display error
-    },
-  });  
+function saveComment(region){
+  region = getRegion(region)
+  if (region) {
+    let comment = $(`#${region.id}-comment`).val()
+    let payload = {text : comment }
+
+    $.ajax({
+      // url: "{{ url_for('default.saveregion', file=track.local_name)}}",
+      url: getFileUrl().concat("/region/", region.id, '/comment'),
+      type: "POST",
+      data: JSON.stringify(payload),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      success: function (data, textStatus, jqxhr) {
+        console.log("Data: " + data + " Status: " + textStatus);
+      },
+      error: function (jqxhr, textStatus, errorThrown) {
+        console.error("Status: " + textStatus + " Error: " + errorThrown);
+        //TODO display error
+      },
+    }); 
+    
+  }
 }

@@ -63,7 +63,7 @@ class Track(db.Model):
         
 class Region(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    internal_id = db.Column(db.String(255), nullable=False)
+    native_id = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(255))
     ts_add = db.Column( db.Float(), default=datetime.now().timestamp() )
     start = db.Column( db.Integer() )
@@ -76,7 +76,7 @@ class Region(db.Model):
     def to_dict(self):
         out = {
             'id' : self.id,
-            'internal_id' : self.internal_id,
+            'native_id' : self.native_id,
             'title' : self.title,
             'start' : self.start,
             'end' : self.end,
