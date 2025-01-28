@@ -308,3 +308,44 @@ function saveDescription(){
     },
   });
 }
+
+
+function loadComments(region){
+  $.ajax({
+    // url: "{{ url_for('default.loadregions', file=track.local_name)}}",
+    url: getFileUrl().concat("/region/", region.id, '/comments'),
+    type: "GET",
+    // data: JSON.stringify(payload),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function (response, textStatus, jqxhr) {
+      // console.log("Data: " + response + " Status: " + textStatus);
+      let data = JSON.parse(JSON.stringify(response)); //may not be necessary as response is already a json
+      // TODO add comments to region object and then call updateRegionCard to display them
+      data.forEach(updateRegionCard);
+    },
+    error: function (jqxhr, textStatus, errorThrown) {
+      console.error("Status: " + textStatus + " Error: " + errorThrown);
+      //TODO display error
+    },
+  });
+}
+
+function saveComment(){
+  let payload = {text : comment }
+  $.ajax({
+    // url: "{{ url_for('default.saveregion', file=track.local_name)}}",
+    url: getFileUrl().concat("/region/", region.id, '/comment'),
+    type: "POST",
+    data: JSON.stringify(payload),
+    contentType: "application/json; charset=utf-8",
+    dataType: "json",
+    success: function (data, textStatus, jqxhr) {
+      console.log("Data: " + data + " Status: " + textStatus);
+    },
+    error: function (jqxhr, textStatus, errorThrown) {
+      console.error("Status: " + textStatus + " Error: " + errorThrown);
+      //TODO display error
+    },
+  });  
+}
