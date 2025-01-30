@@ -1,11 +1,12 @@
-const regions = WaveSurfer.Regions.create(); // Initialize regions plugin
-var dragStopCallback = null;
-
 const REGION_COLOR = "rgba(0, 200,255, 0.3)"
 const REGION_COLOR_NEW = "rgba(86, 236, 16, 0.5)"
 const REGION_COLOR_SELECTED = "rgba(255, 255, 255, 0.5)"
 const WAVE_COLOR = "rgb(83,83,83)"
 const WAVE_COLOR_PROGRESS = "rgb(0,182,240)"
+var ws = null
+const regions = WaveSurfer.Regions.create(); // Initialize regions plugin
+var dragStopCallback = null;
+
 
 $(document).ready(function () {
   // let file_url = "{{url_for('default.track', filename=track.local_name)}}";
@@ -28,17 +29,17 @@ $(document).ready(function () {
     labelColor: "#fff",
     labelSize: "11px",
   }); // Initialize hover plugin
-  const ws = WaveSurfer.create({
+  // const ws = WaveSurfer.create({
+  // ws.setOptions({
+  
+  ws = WaveSurfer.create({
     container: "#waveform",
+    url: file_url,
     waveColor: WAVE_COLOR,
     progressColor: WAVE_COLOR_PROGRESS,
-    url: file_url,
     height: 90,
-    // Set a bar width
     barWidth: 10,
-    // Optionally, specify the spacing between bars
     barGap: 2,
-    // And the bar radius
     barRadius: 4,
     mediaControls: true,
     interact: true,
@@ -181,6 +182,23 @@ function renderRegionCard(region) {
       </div>
     </div>
     `);
+
+    $(`#${region.id}-collapse`).on('shown.bs.collapse', null, region, handleRegionToggle);
+    $(`#${region.id}-collapse`).on('hide.bs.collapse', null, region, handleRegionToggle);
+}
+
+function handleRegionToggle(event){
+  let isExpanded = event.currentTarget.classList.contains('show');
+  let region = event.data
+  let current_time = ws.getCurrentTime()
+  if (current_time >= region.start && current_time <= region.end){
+    // do nothing
+    // this is necessary to avoid recursions 
+    // because setting the ws time triggers the region.in event 
+    // which itself toggles the section causing a loop
+  } else {
+    ws.setTime(region.start)
+  }
 }
 
 function updateRegion(region) {
