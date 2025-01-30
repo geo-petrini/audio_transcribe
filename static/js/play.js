@@ -3,6 +3,7 @@ const REGION_COLOR_NEW = "rgba(86, 236, 16, 0.5)"
 const REGION_COLOR_SELECTED = "rgba(255, 255, 255, 0.5)"
 const WAVE_COLOR = "rgb(83,83,83)"
 const WAVE_COLOR_PROGRESS = "rgb(0,182,240)"
+const WAVE_COLOR_RECORD = "rgb(240, 80, 0)"
 var ws = null
 const regions = WaveSurfer.Regions.create(); // Initialize regions plugin
 var dragStopCallback = null;
