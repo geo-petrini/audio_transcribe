@@ -103,7 +103,10 @@ class Comment(db.Model):
             'region_id' : self.region_id,
             'ts': self.ts_add
         }
-        return out        
+        return out     
+
+    def __repr__(self):
+        return f'Comment: {self.to_dict()}'
             
 
     

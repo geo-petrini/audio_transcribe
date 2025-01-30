@@ -123,7 +123,7 @@ def track_region_save(file):
 
     #TODO save json data as Section
     #TODO save section comments
-    return 'saved', 200
+    return jsonify( region.to_dict() ), 200
 
 
 @app.route('/track/<file>/description', methods=['GET'])
@@ -183,4 +183,6 @@ def track_region_comment_save(file, regionid):
     ) 
     db.session.add(comment)
     db.session.commit()
-    return jsonify( {'id':comment.id }), 200
+
+    current_app.logger.debug(f'comment saved as {comment}')
+    return jsonify( comment.to_dict() ), 200
