@@ -131,7 +131,7 @@ def track_description_load(file):
     track = Track.query.filter(Track.local_name == file).first()   
     comment = Comment.query.filter( (Comment.track_id == track.id)).first()       
     if comment:
-        return jsonify( {'text':comment.text})
+        return jsonify( comment.to_dict() ), 200
     else:
         return 'no data', 404
 
@@ -145,7 +145,7 @@ def track_description_save(file):
     ) 
     db.session.add(comment)
     db.session.commit()
-    return jsonify( {'id':comment.id }), 200
+    return jsonify( comment.to_dict() ), 200
 
 
 @app.route('/track/<file>/region/<regionid>/comment/<commentid>', methods=['GET'])

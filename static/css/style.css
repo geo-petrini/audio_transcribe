@@ -13,3 +13,7 @@
     border-left-width: 4px !important;
     border-left-color: #0000ff !important;
 }
+
+.description{
+    white-space: pre-wrap;
+}

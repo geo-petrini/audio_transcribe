@@ -88,7 +88,7 @@ $(document).ready(function () {
   });
 
 
-  $("#add_description_button").click(function () {
+  $("#save_description_button").click(function () {
     saveDescription()
   });
 
@@ -284,9 +284,12 @@ function getRegionById(region_id) {
   return null;
 }
 
-function secondsToTimestamp(seconds) {
+function secondsToTimestamp(seconds, full=false) {
   const date = new Date(null);
   date.setSeconds(seconds);
+  if (full){
+    return "".concat(date.toISOString().slice(0, 10), " ", date.toISOString().slice(11, 19));
+  }
   return date.toISOString().slice(11, 19);
 }
 
@@ -299,7 +302,7 @@ function loadDescription(){
     success: function (response, textStatus, jqxhr) {
       // console.log("Data: " + response + " Status: " + textStatus);
       let data = JSON.parse(JSON.stringify(response)); //may not be necessary as response is already a json
-      $('#description-content').val( data.text )
+      renderDescription(data)
     },
     error: function (jqxhr, textStatus, errorThrown) {
       console.error("Status: " + textStatus + " Error: " + errorThrown);
@@ -309,7 +312,7 @@ function loadDescription(){
 }
 
 function saveDescription(){
-  let payload = {text : $('#description-content').val() }
+  let payload = {text : $('#description-textarea').val() }
   $.ajax({
     // url: "{{ url_for('default.saveregion', file=track.local_name)}}",
     url: getFileUrl().concat("/description"),
@@ -319,12 +322,39 @@ function saveDescription(){
     dataType: "json",
     success: function (data, textStatus, jqxhr) {
       console.log("Data: " + data + " Status: " + textStatus);
+      renderDescription(data)
     },
     error: function (jqxhr, textStatus, errorThrown) {
       console.error("Status: " + textStatus + " Error: " + errorThrown);
       //TODO display error
     },
   });
+}
+
+
+function renderDescription(description){
+  $('#description-form').hide()
+  $('#save_description_button').hide()
+
+  $('#description-content').append( secondsToTimestamp(description.ts, full=true) )
+  $('#description-content').append( `<div class="description" id="description-text-full">${description.text}</div>` )
+  if (description.text.length > 560){
+    $('#description-content').append( `<div class="description" id="description-text-short">${description.text.slice(0, 560)}</div>` )
+    $('#description-content').append('<button id="description-text-toggle-button" type="button" class="btn btn-sm" onclick="toggleDescriptionText()">Show more</button>   ')
+    $('#description-text-full').hide()
+  }
+
+}
+
+function toggleDescriptionText(){
+  $('#description-text-short').toggle()
+  $('#description-text-full').toggle()
+
+  if ( $('#description-text-full').is(':visible') ){
+    $('#description-text-toggle-button').text('Show less')
+  }else{
+    $('#description-text-toggle-button').text('Show more')
+  }
 }
 
 function loadComments(region){
