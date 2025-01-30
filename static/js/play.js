@@ -1,6 +1,12 @@
 const regions = WaveSurfer.Regions.create(); // Initialize regions plugin
 var dragStopCallback = null;
 
+const REGION_COLOR = "rgba(0, 200,255, 0.3)"
+const REGION_COLOR_NEW = "rgba(86, 236, 16, 0.5)"
+const REGION_COLOR_SELECTED = "rgba(255, 255, 255, 0.5)"
+const WAVE_COLOR = "rgb(83,83,83)"
+const WAVE_COLOR_PROGRESS = "rgb(0,182,240)"
+
 $(document).ready(function () {
   // let file_url = "{{url_for('default.track', filename=track.local_name)}}";
   let file_url = getFileUrl();
@@ -24,8 +30,8 @@ $(document).ready(function () {
   }); // Initialize hover plugin
   const ws = WaveSurfer.create({
     container: "#waveform",
-    waveColor: "rgb(83,83,83)",
-    progressColor: "rgb(0,182,240)",
+    waveColor: WAVE_COLOR,
+    progressColor: WAVE_COLOR_PROGRESS,
     url: file_url,
     height: 90,
     // Set a bar width
@@ -67,16 +73,19 @@ $(document).ready(function () {
   regions.on("region-clicked", (region) => {
     // console.log("Entering region", region);
     openRegionCard(region)
+    region.setOptions( {color: REGION_COLOR})
   });  
 
   regions.on("region-in", (region) => {
     // console.log("Entering region", region);
     openRegionCard(region)
+    region.setOptions( {color: REGION_COLOR_SELECTED})
   });
 
   regions.on("region-out", (region) => {
     // console.log("Exiting region", region);
     closeRegionCard(region)
+    region.setOptions( {color: REGION_COLOR})
   });  
 });
 
@@ -90,7 +99,7 @@ $(document).ready(function () {
 
   $("#add_section_button").click(function () {
     dragStopCallback = regions.enableDragSelection({
-      color: "rgba(86, 236, 16, 0.5)",
+      color: REGION_COLOR_NEW,
     });
     $("#add_section_button").hide(100);
   });
@@ -121,7 +130,7 @@ function createRegion(json) {
     start: json.start,
     end: json.end,
     id: json.native_id,
-    color: "rgba(0, 200,255, 0.3)",
+    color: REGION_COLOR,
     drag: false,
     resize: true,
   });
@@ -190,8 +199,7 @@ function updateRegion(region) {
   }
 
   if (region.drag == false) {
-    // does not work region.color = "rgba(0, 200,255, 0.3)"
-    region.setOptions({ color: "rgba(0, 200,255, 0.3)" }); 
+    region.setOptions({ color: REGION_COLOR }); 
   }
   
 }
@@ -377,9 +385,9 @@ function renderDescription(description){
   $('#save_description_button').hide()
 
   $('#description-content').append( secondsToTimestamp(description.ts, full=true) )
-  $('#description-content').append( `<div class="description" id="description-text-full">${description.text}</div>` )
+  $('#description-content').append( `<div class="text-pre" id="description-text-full">${description.text}</div>` )
   if (description.text.length > 560){
-    $('#description-content').append( `<div class="description" id="description-text-short">${description.text.slice(0, 560)}</div>` )
+    $('#description-content').append( `<div class="text-pre" id="description-text-short">${description.text.slice(0, 560)}</div>` )
     $('#description-content').append('<button id="description-text-toggle-button" type="button" class="btn btn-sm" onclick="toggleDescriptionText()">Show more</button>   ')
     $('#description-text-full').hide()
   }
@@ -481,7 +489,9 @@ function renderRegionComment(region, comment){
   container.append(
     `
     <div id="comment-${comment.id}">
-    <p>${comment.text}</p>
+      <p class="text-secondary">${secondsToTimestamp(comment.ts, full=true)}</p>
+      <p class="text-pre">${comment.text}</p>
+      <hr>
     </div>
     `
   )
