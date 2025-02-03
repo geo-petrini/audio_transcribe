@@ -1,30 +1,36 @@
 const WAVE_COLOR = "rgb(83,83,83)";
 const WAVE_COLOR_PROGRESS = "rgb(0,182,240)";
 const WAVE_COLOR_RECORD = "rgb(240, 80, 0)";
-let ws
-// Initialize the Record plugin
-let record = WaveSurfer.Record.create({
+let ws;
+
+// Initialize plugins
+const record = WaveSurfer.Record.create({
     renderRecordedAudio: false,
     scrollingWaveform: true,
     continuousWaveform: false,
-    continuousWaveformDuration: 30, // optional
-})
+    continuousWaveformDuration: 30,
+});
+
 const timeline = WaveSurfer.Timeline.create({
     height: 11,
     timeInterval: 10,
     primaryLabelInterval: 60,
     style: {
-      fontSize: "10px",
-      color: "#ffffff",
+        fontSize: "10px",
+        color: "#ffffff",
     },
-  }); // Initialize timeline plugin
+});
 
 $(document).ready(function () {
-    if (ws) {
-        ws.destroy();
-    }
+    initializeWaveSurfer();
+    setupPauseButton();
+    setupMicSelect();
+    setupRecordButton();
+});
 
-    // Create a new Wavesurfer instance
+function initializeWaveSurfer() {
+    if (ws) ws.destroy();
+
     ws = WaveSurfer.create({
         container: "#recording",
         waveColor: WAVE_COLOR_RECORD,
@@ -33,148 +39,125 @@ $(document).ready(function () {
         barWidth: 10,
         barGap: 2,
         barRadius: 4,
-    });   
-    ws.registerPlugin(record) 
-    ws.registerPlugin(timeline) 
-});
+    });
 
+    ws.registerPlugin(record);
+    ws.registerPlugin(timeline);
+}
 
-$(document).ready(function () {
-    //TODO refactor
+function setupPauseButton() {
+    const pauseButton = $("#pause");
 
-    // pauseButton.style.display = "none";
-    // recButton.textContent = "Record";    
-    const pauseButton = document.querySelector("#pause");
-    pauseButton.onclick = () => {
-      if (record.isPaused()) {
-        record.resumeRecording();
-        pauseButton.textContent = "Pause";
-        return;
-      }
-    
-      record.pauseRecording();
-      pauseButton.textContent = "Resume";
-    };
-    
-    const micSelect = document.querySelector("#mic-select");
-    {
-      // Mic selection
-      WaveSurfer.Record.getAvailableAudioDevices().then((devices) => {
+    pauseButton.on("click", function () {
+        if (record.isPaused()) {
+            record.resumeRecording();
+            pauseButton.text("Pause");
+        } else {
+            record.pauseRecording();
+            pauseButton.text("Resume");
+        }
+    });
+}
+
+function setupMicSelect() {
+    const micSelect = $("#mic-select");
+
+    WaveSurfer.Record.getAvailableAudioDevices().then((devices) => {
         devices.forEach((device) => {
-          const option = document.createElement("option");
-          option.value = device.deviceId;
-          option.text = device.label || device.deviceId;
-          micSelect.appendChild(option);
+            micSelect.append(
+                `<option value="${device.deviceId}">${device.label || device.deviceId}</option>`
+            );
         });
-      });
-    }
-    // Record button
-    const recButton = document.querySelector("#record");
-    
-    recButton.onclick = () => {
-      if (record.isRecording() || record.isPaused()) {
-        record.stopRecording();
-        recButton.textContent = "Record";
-        pauseButton.style.display = "none";
-        return;
-      }
-    
-      recButton.disabled = true;
-    
-      // reset the wavesurfer instance
-    
-      // get selected device
-      const deviceId = micSelect.value;
-      record.startRecording({ deviceId }).then(() => {
-        recButton.textContent = "Stop";
-        recButton.disabled = false;
-        pauseButton.style.display = "inline";
-      });
-    };
-});
- 
+    });
+}
 
+function setupRecordButton() {
+    const recButton = $("#record");
+    const pauseButton = $("#pause");
 
-// Render recorded audio
-record.on("record-end", (blob) => {
-    createDownloadSection(blob)
-});
+    recButton.on("click", function () {
+        if (record.isRecording() || record.isPaused()) {
+            record.stopRecording();
+            recButton.text("Record");
+            pauseButton.hide();
+        } else {
+            recButton.prop("disabled", true);
+            const deviceId = $("#mic-select").val();
 
-record.on("record-progress", (time) => {
-    updateProgress(time);
-});
+            record.startRecording({ deviceId }).then(() => {
+                recButton.text("Stop");
+                recButton.prop("disabled", false);
+                pauseButton.show();
+            });
+        }
+    });
+}
 
-function createDownloadSection(blob){
-    //TODO use jquery for consistence
-    //TODO add an input field to give a name to the recording
-    //TODO add an upload button 
-    //TODO remove the recording once the upload is done
-    const container = document.querySelector("#recordings");
+record.on("record-end", handleRecordEnd);
+record.on("record-progress", updateProgress);
+
+function handleRecordEnd(blob) {
+    createDownloadSection(blob);
+}
+
+function createDownloadSection(blob) {
+    const container = $("#recordings");
     const recordedUrl = URL.createObjectURL(blob);
 
-    // Create wavesurfer from the recorded audio
-    const timeline = WaveSurfer.Timeline.create({
-        height: 11,
-        timeInterval: 10,
-        primaryLabelInterval: 60,
-        style: {
-          fontSize: "10px",
-          color: "#ffffff",
-        },
-      }); // Initialize timeline plugin
-    const hover = WaveSurfer.Hover.create({
-        lineColor: "#ffffff",
-        lineWidth: 2,
-        labelBackground: "#555",
-        labelColor: "#fff",
-        labelSize: "11px",
-      }); // Initialize hover plugin
-
     const wavesurfer = WaveSurfer.create({
-      container,
-      url: recordedUrl,
-      waveColor: WAVE_COLOR,
-      progressColor: WAVE_COLOR_PROGRESS,
-      height: 90,
-      barWidth: 10,
-      barGap: 2,
-      barRadius: 4,
-      mediaControls: true,
-      interact: true,
-      dragToSeek: true,
-      plugins: [ hover, timeline],
+        container: container[0],
+        url: recordedUrl,
+        waveColor: WAVE_COLOR,
+        progressColor: WAVE_COLOR_PROGRESS,
+        height: 90,
+        barWidth: 10,
+        barGap: 2,
+        barRadius: 4,
+        mediaControls: true,
+        interact: true,
+        dragToSeek: true,
+        plugins: [
+            WaveSurfer.Timeline.create({
+                height: 11,
+                timeInterval: 10,
+                primaryLabelInterval: 60,
+                style: { fontSize: "10px", color: "#ffffff" },
+            }),
+            WaveSurfer.Hover.create({
+                lineColor: "#ffffff",
+                lineWidth: 2,
+                labelBackground: "#555",
+                labelColor: "#fff",
+                labelSize: "11px",
+            }),
+        ],
     });
 
     // Play button
-    const button = container.appendChild(document.createElement("button"));
-    button.textContent = "Play";
-    button.classList.add("btn")
-    button.classList.add("btn-primary")
-    button.onclick = () => wavesurfer.playPause();
-    wavesurfer.on("pause", () => (button.textContent = "Play"));
-    wavesurfer.on("play", () => (button.textContent = "Pause"));
+    const playButton = $(`<button class="btn btn-primary">Play</button>`);
+    playButton.on("click", () => wavesurfer.playPause());
+    container.append(playButton);
+
+    wavesurfer.on("pause", () => playButton.text("Play"));
+    wavesurfer.on("play", () => playButton.text("Pause"));
 
     // Download link
-    const link = container.appendChild(document.createElement("a"));
-    Object.assign(link, {
-      href: recordedUrl,
-      download: "recording." + blob.type.split(";")[0].split("/")[1] || "webm",
-      textContent: "Download recording",
-    });
+    const downloadLink = $(
+        `<a href="${recordedUrl}" class="btn btn-primary" download="recording.${blob.type.split(";")[0].split("/")[1] || "webm"}">Download recording</a>`
+    );
+    container.append(downloadLink);
 }
 
-
-function updateProgress(time){
-    //TODO use jquery for consistence
-    // time will be in milliseconds, convert it to mm:ss format
-    const formattedTime = [
-        Math.floor((time % 3600000) / 60000), // minutes
-        Math.floor((time % 60000) / 1000), // seconds
-    ]
-    .map((v) => (v < 10 ? "0" + v : v))
-    .join(":");
-    const progress = document.querySelector("#progress");
-    progress.textContent = formattedTime;
+function updateProgress(time) {
+    const formattedTime = formatTime(time);
+    $("#progress").text(formattedTime);
 }
 
+function formatTime(milliseconds) {
+    const minutes = Math.floor((milliseconds % 3600000) / 60000);
+    const seconds = Math.floor((milliseconds % 60000) / 1000);
 
+    return [minutes, seconds]
+        .map((v) => (v < 10 ? "0" + v : v))
+        .join(":");
+}
