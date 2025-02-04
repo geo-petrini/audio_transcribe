@@ -101,6 +101,16 @@ function handleRecordEnd(blob) {
 }
 
 function createDownloadSection(blob) {
+  const container = $("#recordings"); 
+  const waveSurferManager = new WaveSurferManager(blob);
+  waveSurferManager.getWavesurfer(container);  
+  
+  container.append( waveSurferManager.getPlayButton() );
+  container.append( waveSurferManager.getDownloadButton() );
+  container.append( waveSurferManager.getNameInput() );
+}
+
+function OLD_createDownloadSection(blob) {
     const container = $("#recordings");
     const recordedUrl = URL.createObjectURL(blob);
 
@@ -160,4 +170,93 @@ function formatTime(milliseconds) {
     return [minutes, seconds]
         .map((v) => (v < 10 ? "0" + v : v))
         .join(":");
+}
+
+
+class WaveSurferManager {
+  constructor(url) {
+    this.url = url;
+    this.wavesurfer = null;
+    this.playButton = null;
+    this.downloadButton = null
+    this.nameInput = null;
+    this.id = Date.now()
+  }
+
+  getWavesurfer(container) {
+    if (!this.wavesurfer) {
+      const recordedUrl = URL.createObjectURL(this.url);
+      this.wavesurfer = WaveSurfer.create({
+        container: container[0],
+        url: recordedUrl,
+        waveColor: WAVE_COLOR,
+        progressColor: WAVE_COLOR_PROGRESS,
+        height: 90,
+        barWidth: 10,
+        barGap: 2,
+        barRadius: 4,
+        mediaControls: true,
+        interact: true,
+        dragToSeek: true,
+        plugins: [
+            WaveSurfer.Timeline.create({
+                height: 11,
+                timeInterval: 10,
+                primaryLabelInterval: 60,
+                style: { fontSize: "10px", color: "#ffffff" },
+            }),
+            WaveSurfer.Hover.create({
+                lineColor: "#ffffff",
+                lineWidth: 2,
+                labelBackground: "#555",
+                labelColor: "#fff",
+                labelSize: "11px",
+            }),
+        ],
+    });
+    }
+  }
+
+  getPlayButton() {
+    if (!this.playButton) {
+      this.playButton = $(`<button class="btn btn-primary">Play</button>`);
+      const wavesurfer = this.wavesurfer;
+      wavesurfer.on("pause", () => {
+        this.playButton.text("Play");
+      });
+      wavesurfer.on("play", () => {
+        this.playButton.text("Pause");
+      });
+      
+      this.playButton.on("click", function() {
+        if(wavesurfer.paused){
+          wavesurfer.play();
+        } else{
+          wavesurfer.pause();
+        }
+      });
+    }
+    return this.playButton;
+  }
+
+  getDownloadButton(){
+    if (!this.downloadButton) {
+      const recordedUrl = URL.createObjectURL(this.url);
+      this.downloadButton = $( `<a href="${recordedUrl}" class="btn btn-primary" download="recording.${this.url.type.split(";")[0].split("/")[1] || "webm"}">Download recording</a>`);
+    }
+    return this.downloadButton;
+  }
+
+  getNameInput(){
+    if (!this.nameInput){
+      this.nameInput = $(`
+            <div class="form-floating">
+              <textarea id="${this.id}-name-input" class="form-control" aria-label="With textarea"></textarea>
+              <label for="${this.id}-comment">Name</span>
+            </div>        
+        `)
+    }
+    return this.nameInput;
+  }
+  
 }

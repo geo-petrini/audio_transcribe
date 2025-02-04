@@ -147,6 +147,7 @@ function renderRegionCards() {
 }
 
 function renderRegionCard(region) {
+  //TODO refactor as class
   $("#regions-container").append(`
     <div id="${region.id}">
       <div class="accordion-item">
@@ -477,6 +478,7 @@ function saveComment(region){
 }
 
 function resetCommentInputField(region){
+  //TODO refactor as class
   region = getRegion(region)
   if (region) {
     let saved = $(`#${region.id}-comment`).data('saved')
