@@ -6,7 +6,6 @@
 <script src="{{url_for('static', filename='js/wavesurfer/7/plugins/record.min.js')}}"></script>
 <script src="{{url_for('static', filename='js/wavesurfer/7/plugins/timeline.min.js')}}"></script>
 <script src="{{url_for('static', filename='js/wavesurfer/7/plugins/hover.min.js')}}"></script>
-<script src="{{url_for('static', filename='js/dropzone.min.js')}}"></script>
 <script src="{{url_for('static', filename='js/upload.js')}}"></script>
 
 {% endblock %} 
@@ -24,55 +23,7 @@
         </button>
     </div>
 </form>
-<div id="dropzone-area">
-  <p>Drag & Drop your files here or click to upload.</p>
-</div>
 
-<script>
-  $(document).ready(function () {
-    console.log("Document ready");
-
-    // $("#upload_form").dropzone({ 
-    //   url: "/upload", 
-    //   disablePreviews:false,
-    //   createImageThumbnails:false,
-    //   acceptedFiles: "audio/*",
-    //  });
-    Dropzone.autoDiscover = false;
-    const dropzone = new Dropzone("#dropzone-area", {
-            url: "/upload", // URL del backend per il caricamento dei file
-            method: "post",
-            acceptedFiles: "audio/*", // Accetta solo file audio
-            maxFilesize: 10, // Limite di 10MB per file
-            maxFiles: 1, // Massimo numero di file
-            createImageThumbnails: false, // Non creare anteprime
-            clickable: true, // Permetti di cliccare per caricare i file
-            // init: function () {
-            //     // Evento per quando il file è caricato correttamente
-            //     this.on("success", function (file, response) {
-            //         console.log("File caricato con successo:", file.name);
-            //         console.log("Risposta del server:", response);
-            //     });
-
-            //     // Evento per quando c'è un errore
-            //     this.on("error", function (file, errorMessage) {
-            //         console.error("Errore durante il caricamento:", errorMessage);
-            //     });
-
-            //     // Evento per quando il caricamento inizia
-            //     this.on("sending", function (file, xhr, formData) {
-            //         console.log("Inviando file:", file.name);
-            //     });
-
-            //     // Evento per rimuovere il file
-            //     this.on("removedfile", function (file) {
-            //         console.log("File rimosso:", file.name);
-            //     });
-            // },
-        });    
-});
-
-</script>
 
 
 <button id="record" class="btn btn-primary">Record</button>
