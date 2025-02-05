@@ -41,6 +41,7 @@ def list():
 
 @app.route('/track/<file>/play')
 def play(file):
+    # TODO check return as track is not used in the template anymore
     track = Track.query.filter(Track.local_name == file).first()
     return render_template('play.html', track=track)
 
