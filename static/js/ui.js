@@ -128,21 +128,6 @@ class RegionsManager {
     this.ws = ws
   }
 
-  TODO_renderRegionCard(region) {
-    const regionContainer = document.getElementById("regions-container");
-    const regionCard = document.createElement("div");
-    regionCard.id = `region-${region.id}`;
-    //TODO complete with the remaining html
-    regionCard.innerHTML = `
-        <div class="region-card">
-          <p>Region ID: ${region.id}</p>
-          <p>Start: ${region.start.toFixed(2)}s</p>
-          <p>End: ${region.end.toFixed(2)}s</p>
-        </div>
-      `;
-    regionContainer.appendChild(regionCard);
-  }
-
   renderRegionCard(region) {
     //TODO refactor as class
     $("#regions-container").append(`
@@ -248,7 +233,7 @@ class RegionsManager {
       id: json.native_id,
       color: this.config.REGION_COLOR,
       drag: false,
-      resize: true,
+      resize: false,
     });
     region.setOptions({ content: json.title }); //for some reason setting the content during construction produces an html element that breaks the object
     region.data = {'comments':[]} // prepare comments array
@@ -281,6 +266,45 @@ class RegionsManager {
         
   loadRegions(){
     this.doAjaxLoadRegions().then( (data) => this.createRegions(data) )
+  }
+
+  async doAjaxSaveRegion(){
+    if (region.drag == false){
+      // region has already been saved
+      console.warn('Invalid action: region has already been saved')
+      return null 
+    }
+    let payload = {
+      start: region.start,
+      end: region.end,
+      native_id: region.id, //map the region.id as native_id
+      title: getRegionTitle(region),
+    };    
+    let response;  
+    try{
+      response = await $.ajax({
+        url: getFileUrl().concat("/region"),
+        type: "POST",
+        data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+      });
+      return response;
+    } catch (error) {
+      console.error(error)
+    }      
+
+  }
+
+  saveRegion(region){
+    
+    this.doAjaxSaveRegion(region).then( (response) => {
+      $("#add-section-button").show(100);
+      region.setOptions({ drag: false, resize: false });
+      this.updateRegion(region)
+      this.updateRegionCard(region);
+
+    });    
   }
 
   getRegionTitle(region) {
@@ -360,16 +384,17 @@ class RegionsManager {
       
 class UIManager {
   static bindButtonEvents(regionManager) {
-    document.getElementById("add_section_button").addEventListener("click", () => {
-      regionManager.regions.enableDragSelection({
-        color: regionManager.config.REGION_COLOR_NEW,
+
+    $("#add_section_button").click(() => {
+      dragStopCallback = regionManager.regions.enableDragSelection({
+        color: WaveSurferConfig.REGION_COLOR_NEW,
       });
-      document.getElementById("add_section_button").style.display = "none";
+      $("#add_section_button").hide(100);
     });
 
-    document.getElementById("save_description_button").addEventListener("click", () => {
+    $("#save-description-button").click( ()=> {
       UIManager.saveDescription();
-    });
+    });    
   }
 
   static saveDescription() {
