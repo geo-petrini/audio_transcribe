@@ -92,11 +92,16 @@ class RegionsManager {
   constructor(config) {
     this.config = config;
     this.regionsInstance = WaveSurfer.Regions.create();
+    this.ws = null;
+    this.dragStopCallback = null;
   }
 
   addEventListeners() {
     this.regionsInstance.on("region-created", (region) => {
       this.renderRegionCard(region);
+      if (this.dragStopCallback) {
+        this.dragStopCallback();
+      }      
     });
 
     this.regionsInstance.on("region-updated", (region) => {
@@ -104,16 +109,23 @@ class RegionsManager {
     });
 
     this.regionsInstance.on("region-click", (region) => {
-      this.handleRegionClick(region);
+      this.openRegionCard(region)
+      region.setOptions( {color: REGION_COLOR})
     });
 
     this.regionsInstance.on("region-in", (region) => {
+      this.openRegionCard(region)
       region.setOptions({ color: this.config.REGION_COLOR_SELECTED });
     });
 
     this.regionsInstance.on("region-out", (region) => {
+      this.closeRegionCard(region)
       region.setOptions({ color: this.config.REGION_COLOR });
     });
+  }
+
+  setWsReference(ws){
+    this.ws = ws
   }
 
   TODO_renderRegionCard(region) {
@@ -170,8 +182,8 @@ class RegionsManager {
       </div>
       `);
   
-      $(`#${region.id}-collapse`).on('shown.bs.collapse', null, region, handleRegionToggle);
-      $(`#${region.id}-collapse`).on('hide.bs.collapse', null, region, handleRegionToggle);
+      $(`#${region.id}-collapse`).on('shown.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
+      $(`#${region.id}-collapse`).on('hide.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
   }  
 
   updateRegionCard(region) {
@@ -183,9 +195,9 @@ class RegionsManager {
   
     if (region.drag == false) {
       // update the region title and hides/disable the content form textarea
-      $(`#${region.id}-content`).text( getRegionTitle(region) )
+      $(`#${region.id}-content`).text( this.getRegionTitle(region) )
       $(`#${region.id}-content-form`).attr("disabled", true);
-      $(`#${region.id}-content-form`).text( getRegionTitle(region) )
+      $(`#${region.id}-content-form`).text( this.getRegionTitle(region) )
       $(`#${region.id}-content-form`).hide(  )
   
       //hide and disable the save button
@@ -200,13 +212,31 @@ class RegionsManager {
       $(`#${region.id}-content`).text( $(`#${region.id}-content-form`).val()  )
     }
   
-    resetCommentInputField(region)
-    renderRegionComments(region)
+    this.resetCommentInputField(region)
+    this.renderRegionComments(region)
   }  
 
-  handleRegionClick(region) {
-    console.log(`Region clicked: ${region.id}`);
-    region.setOptions({ color: this.config.REGION_COLOR_SELECTED });
+  handleRegionToggle(event){
+    let isExpanded = event.currentTarget.classList.contains('show');
+    let region = event.data.region
+    let ws = event.data.ws
+    let current_time = ws.getCurrentTime()
+    if (current_time >= region.start && current_time <= region.end){
+      // do nothing
+      // this is necessary to avoid recursions 
+      // because setting the ws time triggers the region.in event 
+      // which itself toggles the section causing a loop
+    } else {
+      ws.setTime(region.start)
+    }
+  }  
+
+  openRegionCard(region){
+    $(`#${region.id}-collapse`).collapse('show');
+  }
+
+  closeRegionCard(region){
+    $(`#${region.id}-collapse`).collapse('hide');
   }
 
   createRegion(json) {
@@ -222,10 +252,9 @@ class RegionsManager {
     });
     region.setOptions({ content: json.title }); //for some reason setting the content during construction produces an html element that breaks the object
     region.data = {'comments':[]} // prepare comments array
-    loadComments(region);
-    updateRegionCard(region);
+    this.loadComments(region);
+    this.updateRegionCard(region);
     // this.regionsInstance.trigger("region-updated", region); //FIX event not triggered, trigger not a valid function
-
   } 
 
   async doAjaxLoadRegions() {
@@ -252,36 +281,81 @@ class RegionsManager {
         
   loadRegions(){
     this.doAjaxLoadRegions().then( (data) => this.createRegions(data) )
-    for (const region of this.regionsInstance.regions){
-      // loadComments(region);
-      // updateRegionCard(region);      
+  }
+
+  getRegionTitle(region) {
+    if (region == null) {
+      return null;
+    }
+  
+    if ($(region.content).is("div")) {
+      return $(region.content).text();
+    }
+    return null;
+  }  
+
+
+  async doAjaxLoadComments(region){
+    let comments;
+    try{
+      comments = await $.ajax({
+        url: UrlManager.getFileUrl().concat("/region/", region.id, '/comments'),
+        type: "GET",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json"
+      });
+      return comments;
+    } catch (error){
+      console.error(error)
     }
   }
 
-
   loadComments(region){
-    // TODO use async promise
-    $.ajax({
-      // url: "{{ url_for('default.loadregions', file=track.local_name)}}",
-      url: getFileUrl().concat("/region/", region.id, '/comments'),
-      type: "GET",
-      // data: JSON.stringify(payload),
-      contentType: "application/json; charset=utf-8",
-      dataType: "json",
-      success: function (response, textStatus, jqxhr) {
-        // console.log("Data: " + response + " Status: " + textStatus);
-        let data = JSON.parse(JSON.stringify(response)); //may not be necessary as response is already a json
-        // TODO add comments to region object and then call updateRegionCard to display them
-        region.data = {'comments':data}
-        updateRegionCard(region)
-      },
-      error: function (jqxhr, textStatus, errorThrown) {
-        console.error("Status: " + textStatus + " Error: " + errorThrown);
-        //TODO display error
-      },
-    });
+    this.doAjaxLoadComments(region).then( (comments) => {
+      this.updateRegionCard(region);
+      region.data = {'comments':comments}
+    } );
+  }
+
+  resetCommentInputField(region){
+    if (region) {
+      let saved = $(`#${region.id}-comment`).data('saved')
+      if (saved){
+        let container = $(`#${region.id}-comments-container`)
+        let comment = $(`#${region.id}-comment`).val()
+        $(`#${region.id}-comment`).val('')
+        // container.append(
+        //   `<p>${comment}</p>`
+        // )
+      }
+      return true
+    } else {
+      return false
+    }
   }  
-     
+
+  renderRegionComments(region){
+    if (region.data && region.data.comments){
+       region.data.comments.forEach( comment => this.renderRegionComment(region, comment) )
+    }
+  }
+
+  renderRegionComment(region, comment){
+    let container = $(`#${region.id}-comments-container`)
+    if( $(`#comment-${comment.id}`).length ){
+      return null
+    } 
+    container.append(
+      `
+      <div id="comment-${comment.id}">
+        <p class="text-secondary">${secondsToTimestamp(comment.ts, true)}</p>
+        <p class="text-pre">${comment.text}</p>
+        <hr>
+      </div>
+      `
+    )
+  }  
+
 }
       
 class UIManager {
@@ -332,6 +406,7 @@ function initialize(){
   const waveSurferInitializer = new WaveSurferManager("#waveform", config, plugins);
   const waveSurfer = waveSurferInitializer.initialize();
 
+  regionsManager.setWsReference(waveSurfer)
   regionsManager.addEventListeners();
 
   waveSurfer.on("ready", () => {
@@ -355,18 +430,4 @@ function secondsToTimestamp(seconds, full=false) {
     return "".concat(date.toISOString().slice(0, 10), " ", date.toISOString().slice(11, 19));
   }
   return date.toISOString().slice(11, 19);
-}
-
-function handleRegionToggle(event){
-  let isExpanded = event.currentTarget.classList.contains('show');
-  let region = event.data
-  let current_time = ws.getCurrentTime()
-  if (current_time >= region.start && current_time <= region.end){
-    // do nothing
-    // this is necessary to avoid recursions 
-    // because setting the ws time triggers the region.in event 
-    // which itself toggles the section causing a loop
-  } else {
-    ws.setTime(region.start)
-  }
 }
