@@ -99,9 +99,7 @@ class RegionsManager {
   addEventListeners() {
     this.regionsInstance.on("region-created", (region) => {
       this.renderRegionCard(region);
-      if (this.dragStopCallback) {
-        this.dragStopCallback();
-      }      
+      this.setDrag(false)   
     });
 
     this.regionsInstance.on("region-updated", (region) => {
@@ -110,7 +108,7 @@ class RegionsManager {
 
     this.regionsInstance.on("region-click", (region) => {
       this.openRegionCard(region)
-      region.setOptions( {color: REGION_COLOR})
+      region.setOptions( {color: this.color.REGION_COLOR})
     });
 
     this.regionsInstance.on("region-in", (region) => {
@@ -126,6 +124,18 @@ class RegionsManager {
 
   setWsReference(ws){
     this.ws = ws
+  }
+
+  setDrag(value){
+    if (value){
+      this.dragStopCallback = this.regionsInstance.enableDragSelection({
+        color: this.config.REGION_COLOR_NEW,
+      })
+    } else {
+      if (this.dragStopCallback){
+        this.dragStopCallback();
+      }
+    }
   }
 
   renderRegionCard(region) {
@@ -148,17 +158,17 @@ class RegionsManager {
             <div class="accordion-body">
             <p class="card-text">
               <div class="form-floating">
-                <input type="text" class="form-control" id="${region.id}-content-form" value="${region.content}" oninput="updateRegion('${region.id}');">
+                <input type="text" class="form-control" id="${region.id}-content-form" value="${region.content}">
                 <label for="${region.id}-content-form">Title</label>
               </div>
             </p>
-            <a id="${region.id}-save" href="#" class="btn btn-primary" onclick="saveRegion('${region.id}');">Save Section <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 18l-4.2 1.8q-1 .425-1.9-.162T5 17.975V5q0-.825.588-1.412T7 3h5q.425 0 .713.288T13 4t-.288.713T12 5H7v12.95l5-2.15l5 2.15V12q0-.425.288-.712T18 11t.713.288T19 12v5.975q0 1.075-.9 1.663t-1.9.162zm0-13H7h6zm5 2h-1q-.425 0-.712-.288T15 6t.288-.712T16 5h1V4q0-.425.288-.712T18 3t.713.288T19 4v1h1q.425 0 .713.288T21 6t-.288.713T20 7h-1v1q0 .425-.288.713T18 9t-.712-.288T17 8z"/></svg></span></a>
+            <a id="${region.id}-save" href="#" class="btn btn-primary");">Save Section <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 18l-4.2 1.8q-1 .425-1.9-.162T5 17.975V5q0-.825.588-1.412T7 3h5q.425 0 .713.288T13 4t-.288.713T12 5H7v12.95l5-2.15l5 2.15V12q0-.425.288-.712T18 11t.713.288T19 12v5.975q0 1.075-.9 1.663t-1.9.162zm0-13H7h6zm5 2h-1q-.425 0-.712-.288T15 6t.288-.712T16 5h1V4q0-.425.288-.712T18 3t.713.288T19 4v1h1q.425 0 .713.288T21 6t-.288.713T20 7h-1v1q0 .425-.288.713T18 9t-.712-.288T17 8z"/></svg></span></a>
             <div id="${region.id}-comments-form-container" class="d-none">
               <div class="form-floating">
                 <textarea id="${region.id}-comment" class="form-control" aria-label="With textarea"></textarea>
                 <label for="${region.id}-comment">Comment</span>
               </div>
-              <a id="${region.id}-save-comment" href="#" class="btn btn-primary float-end" onclick="saveComment('${region.id}');">Save Comment <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m6 17l-2.15 2.15q-.25.25-.55.125T3 18.8V5q0-.825.588-1.412T5 3h12q.825 0 1.413.588T19 5v4.025q0 .425-.288.7T18 10t-.712-.288T17 9V5H5v10h6q.425 0 .713.288T12 16t-.288.713T11 17zm2-8h6q.425 0 .713-.288T15 8t-.288-.712T14 7H8q-.425 0-.712.288T7 8t.288.713T8 9m0 4h3q.425 0 .713-.288T12 12t-.288-.712T11 11H8q-.425 0-.712.288T7 12t.288.713T8 13m9 4h-2q-.425 0-.712-.288T14 16t.288-.712T15 15h2v-2q0-.425.288-.712T18 12t.713.288T19 13v2h2q.425 0 .713.288T22 16t-.288.713T21 17h-2v2q0 .425-.288.713T18 20t-.712-.288T17 19zM5 15V5z"/></svg></span></a>
+              <a id="${region.id}-save-comment" href="#" class="btn btn-primary float-end");">Save Comment <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m6 17l-2.15 2.15q-.25.25-.55.125T3 18.8V5q0-.825.588-1.412T5 3h12q.825 0 1.413.588T19 5v4.025q0 .425-.288.7T18 10t-.712-.288T17 9V5H5v10h6q.425 0 .713.288T12 16t-.288.713T11 17zm2-8h6q.425 0 .713-.288T15 8t-.288-.712T14 7H8q-.425 0-.712.288T7 8t.288.713T8 9m0 4h3q.425 0 .713-.288T12 12t-.288-.712T11 11H8q-.425 0-.712.288T7 12t.288.713T8 13m9 4h-2q-.425 0-.712-.288T14 16t.288-.712T15 15h2v-2q0-.425.288-.712T18 12t.713.288T19 13v2h2q.425 0 .713.288T22 16t-.288.713T21 17h-2v2q0 .425-.288.713T18 20t-.712-.288T17 19zM5 15V5z"/></svg></span></a>
             </div>
             <div id="${region.id}-comments-container">
             </div>
@@ -169,6 +179,28 @@ class RegionsManager {
   
       $(`#${region.id}-collapse`).on('shown.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
       $(`#${region.id}-collapse`).on('hide.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
+      $(`#${region.id}-content-save`).on('click', null, {region:region}, this.handleSaveRegion);
+      $(`#${region.id}-content-form`).on('input', null, {region:region}, this.handleRegionUpdate);
+      $(`#${region.id}-content-comment`).on('onclick', null, {region:region}, this.saveComment);
+
+  }  
+
+  handleRegionUpdate(event) {
+    let region = event.data.region
+    // console.log(`updating ${region_id} with ${value}`);
+    let value = $(`#${region.id}-content-form`).val();
+    if (region) {
+      // both setOptions and setContent work
+      // region.setOptions({ content: value });    
+      region.setContent( value );  
+      // this should trigger the region on update event but apparently it does not, so I force the event
+      region.emit('update-end');
+    }
+  
+    if (region.drag == false) {
+      region.setOptions({ color: REGION_COLOR }); 
+    }
+    
   }  
 
   updateRegionCard(region) {
@@ -296,6 +328,10 @@ class RegionsManager {
 
   }
 
+  handleSaveRegion(event){
+    this.saveRegion(event.data.region)
+  }
+
   saveRegion(region){
     
     this.doAjaxSaveRegion(region).then( (response) => {
@@ -385,11 +421,9 @@ class RegionsManager {
 class UIManager {
   static bindButtonEvents(regionManager) {
 
-    $("#add_section_button").click(() => {
-      dragStopCallback = regionManager.regions.enableDragSelection({
-        color: WaveSurferConfig.REGION_COLOR_NEW,
-      });
-      $("#add_section_button").hide(100);
+    $("#add-section-button").click(() => {
+      regionManager.setDrag(true);
+      $("#add-section-button").hide(100);
     });
 
     $("#save-description-button").click( ()=> {
