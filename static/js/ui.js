@@ -194,7 +194,7 @@ class RegionsManager {
       $(`#${region.id}-collapse`).on('hide.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
       $(`#${region.id}-save`).on('click', null, {region:region}, this.handleSaveRegion.bind(this));
       $(`#${region.id}-content-form`).on('input', null, {region:region}, this.handleRegionUpdate.bind(this));
-      $(`#${region.id}-content-comment`).on('onclick', null, {region:region}, this.saveComment);
+      $(`#${region.id}-save-comment`).on('click', null, {region:region}, this.handleSaveComment.bind(this));
 
       if (region.drag == true){
         this.openRegionCard(region)
@@ -290,7 +290,8 @@ class RegionsManager {
     region.setOptions({ content: json.title }); //for some reason setting the content during construction produces an html element that breaks the object
     region.data = {'comments':[]} // prepare comments array
     this.loadComments(region);
-    this.updateRegionCard(region);
+    region.emit('update-end');  // triggers this.updateRegionCard(region);
+    
     // this.regionsInstance.trigger("region-updated", region); //FIX event not triggered, trigger not a valid function
   } 
 
@@ -394,9 +395,49 @@ class RegionsManager {
 
   loadComments(region){
     this.doAjaxLoadComments(region).then( (comments) => {
-      this.updateRegionCard(region);
       region.data = {'comments':comments}
+      // region.emit('update-end');
+      // this.updateRegionCard(region);
+      this.renderRegionComments(region)
     } );
+  }
+
+  handleSaveComment(event){
+    this.saveComment(event.data.region)
+  }
+
+  async doAjaxSaveComment(region){
+    let response;
+    let comment = $(`#${region.id}-comment`).val()
+    if (comment.length == 0){ return }    
+    let payload = {text : comment };
+    try {
+      response = await $.ajax({
+        url: UrlManager.getFileUrl().concat("/region/", region.id, '/comment'),
+        type: "POST",
+        data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json"
+      });
+      return response;
+    } catch (error) {
+      //TODO display error
+      console.error(error);
+    }
+
+  }
+
+  saveComment(region){
+    this.doAjaxSaveComment(region).then( (response) => {
+      if(!response){ return }
+
+      $(`#${region.id}-comment`).data('saved', true)
+      if (!'comments' in region.data) { region.data.comments = []}
+      region.data.comments.push( response )
+      region.emit('update-end');
+      //this.updateRegionCard(region)
+    } );    
+
   }
 
   resetCommentInputField(region){
