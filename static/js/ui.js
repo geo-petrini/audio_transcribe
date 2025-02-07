@@ -99,7 +99,7 @@ class RegionsManager {
   addEventListeners() {
     this.regionsInstance.on("region-created", (region) => {
       this.renderRegionCard(region);
-      this.setDrag(false)   
+      this.enableCreate(false)   
     });
 
     this.regionsInstance.on("region-updated", (region) => {
@@ -126,8 +126,9 @@ class RegionsManager {
     this.ws = ws
   }
 
-  setDrag(value){
+  enableCreate(value){
     if (value){
+      //TODO disable other events like region-click or region-in region-out
       this.dragStopCallback = this.regionsInstance.enableDragSelection({
         color: this.config.REGION_COLOR_NEW,
       })
@@ -140,7 +141,8 @@ class RegionsManager {
 
   renderRegionCard(region) {
     //TODO refactor as class
-    $("#regions-container").append(`
+    //TODO do not append, insert to the top of the container
+    $("#regions-container").prepend(`
       <div id="${region.id}">
         <div class="accordion-item">
           <div class="accordion-header">
@@ -179,14 +181,18 @@ class RegionsManager {
   
       $(`#${region.id}-collapse`).on('shown.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
       $(`#${region.id}-collapse`).on('hide.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
-      $(`#${region.id}-content-save`).on('click', null, {region:region}, this.handleSaveRegion);
-      $(`#${region.id}-content-form`).on('input', null, {region:region}, this.handleRegionUpdate);
+      $(`#${region.id}-save`).on('click', null, {region:region}, this.handleSaveRegion.bind(this));
+      $(`#${region.id}-content-form`).on('input', null, {region:region}, this.handleRegionUpdate.bind(this));
       $(`#${region.id}-content-comment`).on('onclick', null, {region:region}, this.saveComment);
 
   }  
 
   handleRegionUpdate(event) {
     let region = event.data.region
+    this.updateRegion(region)
+  }  
+
+  updateRegion(region){
     // console.log(`updating ${region_id} with ${value}`);
     let value = $(`#${region.id}-content-form`).val();
     if (region) {
@@ -198,10 +204,9 @@ class RegionsManager {
     }
   
     if (region.drag == false) {
-      region.setOptions({ color: REGION_COLOR }); 
+      region.setOptions({ color: this.config.REGION_COLOR }); 
     }
-    
-  }  
+  }
 
   updateRegionCard(region) {
     $(`#${region.id}-start`).text(secondsToTimestamp(region.start));
@@ -300,7 +305,7 @@ class RegionsManager {
     this.doAjaxLoadRegions().then( (data) => this.createRegions(data) )
   }
 
-  async doAjaxSaveRegion(){
+  async doAjaxSaveRegion(region){
     if (region.drag == false){
       // region has already been saved
       console.warn('Invalid action: region has already been saved')
@@ -310,12 +315,12 @@ class RegionsManager {
       start: region.start,
       end: region.end,
       native_id: region.id, //map the region.id as native_id
-      title: getRegionTitle(region),
+      title: this.getRegionTitle(region),
     };    
     let response;  
     try{
       response = await $.ajax({
-        url: getFileUrl().concat("/region"),
+        url: UrlManager.getFileUrl().concat("/region"),
         type: "POST",
         data: JSON.stringify(payload),
         contentType: "application/json; charset=utf-8",
@@ -333,13 +338,10 @@ class RegionsManager {
   }
 
   saveRegion(region){
-    
     this.doAjaxSaveRegion(region).then( (response) => {
       $("#add-section-button").show(100);
       region.setOptions({ drag: false, resize: false });
       this.updateRegion(region)
-      this.updateRegionCard(region);
-
     });    
   }
 
@@ -422,7 +424,7 @@ class UIManager {
   static bindButtonEvents(regionManager) {
 
     $("#add-section-button").click(() => {
-      regionManager.setDrag(true);
+      regionManager.enableCreate(true);
       $("#add-section-button").hide(100);
     });
 
@@ -431,6 +433,7 @@ class UIManager {
     });    
   }
 
+  //TODO fix this does not work
   static saveDescription() {
     const description = document.getElementById("description_input").value;
     console.log(`Description saved: ${description}`);
