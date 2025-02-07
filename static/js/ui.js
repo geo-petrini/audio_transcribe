@@ -94,7 +94,7 @@ class RegionsManager {
     this.regionsInstance = WaveSurfer.Regions.create();
     this.ws = null;
     this.dragStopCallback = null;
-    this.suspendEvents = false; //TODO us a real on / off mechanism
+    this.suspendEvents = false; //TODO use a real on / off mechanism
   }
 
   addEventListeners() {
@@ -109,7 +109,7 @@ class RegionsManager {
     this.regionsInstance.on("region-click", (region) => {
       if (this.suspendEvents){
         return;
-      }            
+      }
       this.openRegionCard(region)
       region.setOptions( {color: this.color.REGION_COLOR})
     });
@@ -397,7 +397,6 @@ class RegionsManager {
     this.doAjaxLoadComments(region).then( (comments) => {
       region.data = {'comments':comments}
       // region.emit('update-end');
-      // this.updateRegionCard(region);
       this.renderRegionComments(region)
     } );
   }
@@ -435,9 +434,7 @@ class RegionsManager {
       if (!'comments' in region.data) { region.data.comments = []}
       region.data.comments.push( response )
       region.emit('update-end');
-      //this.updateRegionCard(region)
     } );    
-
   }
 
   resetCommentInputField(region){
@@ -447,9 +444,6 @@ class RegionsManager {
         let container = $(`#${region.id}-comments-container`)
         let comment = $(`#${region.id}-comment`).val()
         $(`#${region.id}-comment`).val('')
-        // container.append(
-        //   `<p>${comment}</p>`
-        // )
       }
       return true
     } else {
@@ -478,7 +472,6 @@ class RegionsManager {
       `
     )
   }  
-
 }
       
 class UIManager {

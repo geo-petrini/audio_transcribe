@@ -3,8 +3,6 @@
 
 # TODO
 - redesign UI
-- load comments as they reach the played section/region
-- move insert form to the top
 - add a toggle button to display all comments, independently of the play status
 - export all comments as text
 - add a search function
@@ -25,3 +23,5 @@
 
 DONE
 - add text to the track (model reference already present)
+- load comments as they reach the played section/region
+- move insert form to the top- 
