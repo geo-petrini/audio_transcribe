@@ -152,7 +152,7 @@ class RegionsManager {
 
   renderRegionCard(region) {
     //TODO refactor as class
-    //TODO do not append, insert to the top of the container
+    //DONE do not append, insert to the top of the container
     $("#regions-container").prepend(`
       <div id="${region.id}">
         <div class="accordion-item">
@@ -448,16 +448,105 @@ class UIManager {
       $("#add-section-button").hide(100);
     });
 
-    $("#save-description-button").click( ()=> {
-      UIManager.saveDescription();
-    });    
+  }
+}
+
+class DescriptionManager{
+  constructor(config){
+    this.addEventListeners()
   }
 
-  //TODO fix this does not work
-  static saveDescription() {
-    const description = document.getElementById("description_input").value;
-    console.log(`Description saved: ${description}`);
+  addEventListeners(){
+    $("#save-description-button").on('click', () => {
+      this.saveDescription();
+    });
   }
+
+  async doAjaxLoadDescription(){
+    let data;
+    try {
+      data = await $.ajax({
+        url: UrlManager.getFileUrl().concat("/description"),
+        type: "GET",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json"
+      });  
+      return data;
+    } catch (error) {
+      console.error(error)
+    }   
+  }
+
+  loadDescription(){
+    this.doAjaxLoadDescription().then( (data) => {
+      if(data){ this.renderDescription(data) }
+      
+    })
+  }
+
+  renderDescription(description){
+    $('#description-form').hide()
+    $('#save-description-button').hide()
+  
+    $('#description-content').append( secondsToTimestamp(description.ts, true) )
+    $('#description-content').append( `<div class="text-pre" id="description-text-full">${description.text}</div>` )
+    if (description.text.length > 560){
+      $('#description-content').append( `<div class="text-pre" id="description-text-short">${description.text.slice(0, 560)}</div>` )
+      $('#description-content').append('<button id="description-text-toggle-button" type="button" class="btn btn-sm">Show more</button>   ')
+      $('#description-text-full').hide()
+
+      $('#description-content').on('click', this.handleToggleDescriptionText)
+    }
+  }
+
+  handleToggleDescriptionText(){
+    $('#description-text-short').toggle()
+    $('#description-text-full').toggle()
+  
+    if ( $('#description-text-full').is(':visible') ){
+      $('#description-text-toggle-button').text('Show less')
+    }else{
+      $('#description-text-toggle-button').text('Show more')
+    }
+  }  
+
+  async doAjaxSaveDescription(){
+    let payload = {text : $('#description-textarea').val() }
+    let response;
+
+    try {
+      response = await  $.ajax({
+        // url: "{{ url_for('default.saveregion', file=track.local_name)}}",
+        url: UrlManager.getFileUrl().concat("/description"),
+        type: "POST",
+        data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json"
+      });
+      return response;
+    } catch (error) {
+      if(error.status == 404){} else { console.error(error) }
+    }
+  }
+
+  saveDescription(){
+    this.doAjaxSaveDescription().then( (response) => {
+      this.renderDescription(response)
+    });
+
+  }  
+
+  toggleDescriptionText(){
+    $('#description-text-short').toggle()
+    $('#description-text-full').toggle()
+  
+    if ( $('#description-text-full').is(':visible') ){
+      $('#description-text-toggle-button').text('Show less')
+    }else{
+      $('#description-text-toggle-button').text('Show more')
+    }
+  }  
+
 }
 
 class UrlManager {
@@ -482,6 +571,7 @@ function initialize(){
   const hover = new HoverManager(config)
   const timeline = new TimelineManager(config)
   const regionsManager = new RegionsManager(config);
+  const descriptionManager = new DescriptionManager(config)
 
   const plugins = [hover.hoverInstance, timeline.timelineInstance, regionsManager.regionsInstance]
 
@@ -490,6 +580,8 @@ function initialize(){
 
   regionsManager.setWsReference(waveSurfer)
   regionsManager.addEventListeners();
+
+  descriptionManager.loadDescription()
 
   waveSurfer.on("ready", () => {
     regionsManager.loadRegions();
