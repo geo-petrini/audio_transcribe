@@ -1,4 +1,4 @@
-//TODO integrate and try
+
 
 class WaveSurferConfig {
   constructor() {
@@ -94,12 +94,12 @@ class RegionsManager {
     this.regionsInstance = WaveSurfer.Regions.create();
     this.ws = null;
     this.dragStopCallback = null;
+    this.suspendEvents = false; //TODO us a real on / off mechanism
   }
 
   addEventListeners() {
     this.regionsInstance.on("region-created", (region) => {
       this.renderRegionCard(region);
-      this.enableCreate(false)   
     });
 
     this.regionsInstance.on("region-updated", (region) => {
@@ -107,16 +107,25 @@ class RegionsManager {
     });
 
     this.regionsInstance.on("region-click", (region) => {
+      if (this.suspendEvents){
+        return;
+      }            
       this.openRegionCard(region)
       region.setOptions( {color: this.color.REGION_COLOR})
     });
 
     this.regionsInstance.on("region-in", (region) => {
+      if (this.suspendEvents){
+        return;
+      }            
       this.openRegionCard(region)
       region.setOptions({ color: this.config.REGION_COLOR_SELECTED });
     });
 
     this.regionsInstance.on("region-out", (region) => {
+      if (this.suspendEvents){
+        return;
+      }            
       this.closeRegionCard(region)
       region.setOptions({ color: this.config.REGION_COLOR });
     });
@@ -128,14 +137,16 @@ class RegionsManager {
 
   enableCreate(value){
     if (value){
-      //TODO disable other events like region-click or region-in region-out
+      //DONE disable other events like region-click or region-in region-out
       this.dragStopCallback = this.regionsInstance.enableDragSelection({
         color: this.config.REGION_COLOR_NEW,
       })
+      this.suspendEvents = true;
     } else {
       if (this.dragStopCallback){
         this.dragStopCallback();
       }
+      this.suspendEvents = false;
     }
   }
 
@@ -185,6 +196,9 @@ class RegionsManager {
       $(`#${region.id}-content-form`).on('input', null, {region:region}, this.handleRegionUpdate.bind(this));
       $(`#${region.id}-content-comment`).on('onclick', null, {region:region}, this.saveComment);
 
+      if (region.drag == true){
+        this.openRegionCard(region)
+      }
   }  
 
   handleRegionUpdate(event) {
@@ -199,6 +213,7 @@ class RegionsManager {
       // both setOptions and setContent work
       // region.setOptions({ content: value });    
       region.setContent( value );  
+      region.setOptions({ color: this.config.REGION_COLOR_NEW }); 
       // this should trigger the region on update event but apparently it does not, so I force the event
       region.emit('update-end');
     }
@@ -335,6 +350,7 @@ class RegionsManager {
 
   handleSaveRegion(event){
     this.saveRegion(event.data.region)
+    this.enableCreate(false)
   }
 
   saveRegion(region){
@@ -368,7 +384,11 @@ class RegionsManager {
       });
       return comments;
     } catch (error){
-      console.error(error)
+      if (error.status == 404){
+
+      } else {
+        console.error(error)
+      }
     }
   }
 

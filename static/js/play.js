@@ -61,8 +61,7 @@ $(document).ready(function () {
     }
   });
 
-  //TODO update to regions.on("region-update", updateRegionCard)
-  regions.on("region-update", (region) => {
+    regions.on("region-update", (region) => {
     // console.log("Updating region", region);
     updateRegionCard(region);
   });
@@ -140,10 +139,6 @@ function createRegion(json) {
   region.data = {'comments':[]} // prepare comments array
   loadComments(region);
   updateRegionCard(region);
-}
-
-function renderRegionCards() {
-  //TODO loop all regions.getRegions()
 }
 
 function renderRegionCard(region) {
