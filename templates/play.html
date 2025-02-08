@@ -46,4 +46,41 @@
   </div>
 </div>
 
+<script>
+  $(document).ready(function () {
+    initialize()
+  });
+
+  function initialize(){
+    const config = new WaveSurferConfig();
+
+    const hover = new HoverManager(config)
+    const timeline = new TimelineManager(config)
+    const regionsManager = new RegionsManager(config);
+    const descriptionManager = new DescriptionManager(config)
+
+    const plugins = [hover.hoverInstance, timeline.timelineInstance, regionsManager.regionsInstance]
+
+    const waveSurferManager = new WaveSurferManager({container:"#waveform", url:UrlManager.getFileUrl()}, config, plugins);
+    const waveSurfer = waveSurferManager.initialize();
+
+    regionsManager.setWsReference(waveSurfer)
+    regionsManager.addEventListeners();
+
+    descriptionManager.loadDescription()
+
+    waveSurfer.on("ready", () => {
+      regionsManager.loadRegions();
+      $("#waveform-spinner").hide();
+    });  
+    
+
+    UIManager.bindButtonEvents(regionsManager);
+
+    waveSurfer.on("ready", () => {
+      console.log("WaveSurfer is ready");
+    });
+  }  
+</script>
+
 {% endblock %}

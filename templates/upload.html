@@ -6,7 +6,7 @@
 <script src="{{url_for('static', filename='js/wavesurfer/7/plugins/record.min.js')}}"></script>
 <script src="{{url_for('static', filename='js/wavesurfer/7/plugins/timeline.min.js')}}"></script>
 <script src="{{url_for('static', filename='js/wavesurfer/7/plugins/hover.min.js')}}"></script>
-<script src="{{url_for('static', filename='js/upload.js')}}"></script>
+<script src="{{url_for('static', filename='js/ui.js')}}"></script>
 
 {% endblock %} 
 {% block content %}
@@ -26,14 +26,118 @@
 
 
 
-<button id="record" class="btn btn-primary">Record</button>
-<select id="mic-select" class="btn btn-primary">
+<select id="mic-select" class="btn btn-primary" hidden>
   <option value="" hidden>Select mic</option>
 </select>
-<button id="pause" class="btn btn-primary" style="display: none;">Pause</button>
-<p id="progress">00:00</p>
+<div class="row">
+  <div class="col">
+    <div class="btn-group">
+      <button id="record" class="btn btn-primary">Record</button>
+      <button id="pause" class="btn btn-primary" style="display: none;">Pause</button>
+    </div>
+  </div>
+  <div class="col-2">
+    <div class="input-group" id="progressContainer" style="display: none;">
+      <div class="input-group-text" id="progressGroupAddon">Progress</div>
+      <input id="progress" type="text" class="form-control" aria-describedby="progressGroupAddon" value="00:00:00" disabled readonly>
+    </div>
+  </div>
+</div>
+
+
 <div id="recording"></div>
 <div id="recordings"></div>
+
+
+<script>
+  $(document).ready(function () {
+    init()
+  });
+
+  function setupMicSelect() {
+
+    const micSelect = $("#mic-select");
+
+    WaveSurfer.Record.getAvailableAudioDevices().then((devices) => {
+        devices.forEach((device) => {
+            micSelect.append(
+                `<option value="${device.deviceId}">${device.label || device.deviceId}</option>`
+            );
+        });
+    });
+  }  
+
+  function setupPauseResume(record){
+    const pauseButton = $("#pause");
+    $("#pause").on("click", function () {
+
+        if (record.isPaused()) {
+            record.pauseRecording();
+            pauseButton.text("Pause");
+        } else {
+            record.pauseRecording();
+            pauseButton.text("Resume");
+        }
+    });
+
+  }
+
+  function setupRecordButton(record) {
+    const recButton = $("#record");
+    const pauseButton = $("#pause");
+    const progressContainer = $("#progressContainer")
+
+    recButton.on("click", () => {
+        if (record.isRecording() || record.isPaused()) {
+            record.stopRecording();
+            recButton.text("Record");
+            pauseButton.hide();
+            progressContainer.hide()
+        } else {
+            recButton.prop("disabled", true);
+            progressContainer.show()
+            const deviceId = $("#mic-select").val();
+
+            record.startRecording({ deviceId }).then(() => {
+            // record.startRecording().then(() => {
+                recButton.text("Stop");
+                recButton.prop("disabled", false);
+                pauseButton.show();
+                
+            });
+        }
+    });
+  }  
+
+  function init(){
+    const config = new WaveSurferConfig();
+
+    const hover = new HoverManager(config)
+    const timeline = new TimelineManager(config)
+    const record = new RecordManager(config, '#recordings')
+
+    const plugins = [record.recordInstance, timeline.timelineInstance]
+
+    const wsOptions = {
+      mediaControls:false, 
+      url:'data:audio/wav;base64', 
+      container:'#recording', 
+      waveColor: config.WAVE_COLOR_RECORD,
+    }
+    const waveSurferInitializer = new WaveSurferManager(wsOptions, config, plugins);
+    const waveSurfer = waveSurferInitializer.initialize();
+    // waveSurfer.setOptions();
+
+    setupMicSelect()
+    setupPauseResume(record.recordInstance)
+    setupRecordButton(record.recordInstance)
+
+    // waveSurfer.on("ready", () => {
+    //   console.log("WaveSurfer is ready");
+    // });
+
+  }    
+</script>
 
 {% with messages = get_flashed_messages() %}
 {% if messages %}

@@ -12,39 +12,78 @@ class WaveSurferConfig {
 }
 
 class WaveSurferManager {
-  constructor(container, config, plugins) {
-    this.container = container;
-    this.fileUrl = UrlManager.getFileUrl();
+  constructor(options, config, plugins) {
+    // this.container = container;
+    // this.fileUrl = UrlManager.getFileUrl();
     this.config = config;
     this.waveSurferInstance = null;
     this.plugins = plugins;
+    this.options = options;
   }
 
   initialize() {
+    //TODO handle all options
     this.waveSurferInstance = WaveSurfer.create({
-      container: this.container,
-      url: this.fileUrl,
-      waveColor: this.config.WAVE_COLOR,
-      progressColor: this.config.WAVE_COLOR_PROGRESS,
-      height: 90,
-      barWidth: 10,
-      barGap: 2,
-      barRadius: 4,
-      mediaControls: true,
-      interact: true,
-      dragToSeek: true,
+      container: this.options.container,
+      url: 'url' in this.options ? this.options.url : undefined,
+      waveColor: 'waveColor' in this.options ? this.options.waveColor : this.config.WAVE_COLOR,
+      progressColor: 'progressColor' in this.options ? this.options.progressColor :  this.config.WAVE_COLOR_PROGRESS,
+      height: 'height' in this.options ? this.options.height : 90,
+      barWidth: 'barWidth' in this.options ? this.options.barWidth :  10,
+      barGap: 'barGap' in this.options ? this.options.barGap :  2,
+      barRadius: 'barRadius' in this.options ? this.options.barRadius :  4,
+      mediaControls: 'mediaControls' in this.options ? this.options.mediaControls :  true,
+      interact: 'interact' in this.options ? this.options.interact :  true,
+      dragToSeek: 'dragToSeek' in this.options ? this.options.dragToSeek : true,
       plugins: this.plugins,
     });
 
     return this.waveSurferInstance;
   }
 
-  // addEventListeners() {
-  //   this.waveSurferInstance.on("ready", () => {
-  //     loadRegions();
-  //     $("#waveform-spinner").hide();
-  //   });    
-  // }
+  getPlayButton() {
+    if (!this.playButton) {
+      this.playButton = $(`<button class="btn btn-primary">Play</button>`);
+      const wavesurfer = this.waveSurferInstance;
+      wavesurfer.on("pause", () => {
+        this.playButton.text("Play");
+      });
+      wavesurfer.on("play", () => {
+        this.playButton.text("Pause");
+      });
+      
+      this.playButton.on("click", function() {
+        if(wavesurfer.paused){
+          wavesurfer.play();
+        } else{
+          wavesurfer.pause();
+        }
+      });
+    }
+    return this.playButton;
+  }
+
+  getDownloadButton(blob){
+    if (!this.downloadButton) {
+      const wavesurfer = this.waveSurferInstance;
+      // const recordedUrl = URL.createObjectURL(wavesurfer.options.url);
+      const recordedUrl = wavesurfer.options.url
+      this.downloadButton = $( `<a href="${recordedUrl}" class="btn btn-primary" download="recording.${blob.type.split(";")[0].split("/")[1] || "webm"}">Download recording</a>`);
+    }
+    return this.downloadButton;
+  }
+
+  getNameInput(){
+    if (!this.nameInput){
+      this.nameInput = $(`
+            <div class="form-floating">
+              <textarea id="${this.id}-name-input" class="form-control" aria-label="With textarea"></textarea>
+              <label for="${this.id}-comment">Name</span>
+            </div>        
+        `)
+    }
+    return this.nameInput;
+  }
 }
 
 class HoverManager {
@@ -66,6 +105,87 @@ class HoverManager {
   }
 }
 
+class RecordManager {
+  constructor(config, recordingsContainer) {
+    this.config = config;
+    this.recordingsContainer = recordingsContainer //$(recordingsContainer)
+    this.recordInstance = null;
+  
+    this.initialize();
+    this.addEventListeners();
+  }
+
+  addEventListeners(){
+    this.recordInstance.on("record-end", (blob) => {this.displayRecording(blob)});
+    this.recordInstance.on("record-progress", (time) => {this.updateProgress(time)});           
+  }
+
+  initialize(){
+    this.recordInstance = WaveSurfer.Record.create({
+      renderRecordedAudio: false,
+      scrollingWaveform: true,
+      continuousWaveform: false,
+      continuousWaveformDuration: 30,
+    });
+
+    return this.recordInstance;
+  }
+
+  getDevices(){
+    //BUG devices is undefined, there are some unfulfilled promises somewhere
+    this.recordInstance.startMic();
+    this.recordInstance.stopMic();
+    let devices = WaveSurfer.Record.getAvailableAudioDevices();
+    return devices;
+  }
+
+
+  // ---- convenience methods to expose internal recordInstance
+  startRecording(options){
+    return this.recordInstance.startRecording(options)
+  }
+
+  isRecording(){
+    return this.recordInstance.isRecording()
+  }
+
+  isPaused(){
+    return this.recordInstance.isPaused();
+  }
+
+  pauseRecording(){
+    return this.recordInstance.pauseRecording()
+  }
+
+  resumeRecording(){
+    return this.recordInstance.resumeRecording()
+  }
+  
+  stopRecording(){
+    return this.recordInstance.stopRecording()
+  }
+
+  updateProgress(time) {
+    //TODO check if progress exists
+    const formattedTime = secondsToTimestamp(time/1000);
+    $("#progress").text(formattedTime);
+    $("#progress").val(formattedTime);
+  }  
+
+  displayRecording(blob){
+    const url = URL.createObjectURL(blob)
+    const hover = new HoverManager(this.config)
+    const timeline = new TimelineManager(this.config)
+    const plugins = [hover.hoverInstance, timeline.timelineInstance]
+    const waveSurferManager = new WaveSurferManager({url:url, container:this.recordingsContainer}, this.config, plugins);
+    const waveSurfer = waveSurferManager.initialize();
+    
+    // container.append( waveSurferManager.getPlayButton() );
+    $(this.recordingsContainer).append( waveSurferManager.getDownloadButton(blob) );
+    $(this.recordingsContainer).append( waveSurferManager.getNameInput() );
+  }
+
+}
 
 class TimelineManager {
   constructor(config) {
@@ -592,44 +712,6 @@ class UrlManager {
     return `${protocol}://${site}/track/${resource}`;
   }
 }
-
-
-
-$(document).ready(function () {
-  initialize()
-});
-
-function initialize(){
-  const config = new WaveSurferConfig();
-
-  const hover = new HoverManager(config)
-  const timeline = new TimelineManager(config)
-  const regionsManager = new RegionsManager(config);
-  const descriptionManager = new DescriptionManager(config)
-
-  const plugins = [hover.hoverInstance, timeline.timelineInstance, regionsManager.regionsInstance]
-
-  const waveSurferInitializer = new WaveSurferManager("#waveform", config, plugins);
-  const waveSurfer = waveSurferInitializer.initialize();
-
-  regionsManager.setWsReference(waveSurfer)
-  regionsManager.addEventListeners();
-
-  descriptionManager.loadDescription()
-
-  waveSurfer.on("ready", () => {
-    regionsManager.loadRegions();
-    $("#waveform-spinner").hide();
-  });  
-  
-
-  UIManager.bindButtonEvents(regionsManager);
-
-  waveSurfer.on("ready", () => {
-    console.log("WaveSurfer is ready");
-  });
-}
-
 
 function secondsToTimestamp(seconds, full=false) {
   const date = new Date(null);
