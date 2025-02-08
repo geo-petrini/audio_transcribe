@@ -19,6 +19,7 @@ class WaveSurferManager {
     this.waveSurferInstance = null;
     this.plugins = plugins;
     this.options = options;
+    this.id = Date.now()
   }
 
   initialize() {
@@ -39,6 +40,10 @@ class WaveSurferManager {
     });
 
     return this.waveSurferInstance;
+  }
+
+  setBlob(blob){
+    this.blob = blob
   }
 
   getPlayButton() {
@@ -63,28 +68,129 @@ class WaveSurferManager {
     return this.playButton;
   }
 
-  getDownloadButton(blob){
+  // getDownloadButton(blob){
+  getDownloadButton(extension){
     if (!this.downloadButton) {
       const wavesurfer = this.waveSurferInstance;
-      // const recordedUrl = URL.createObjectURL(wavesurfer.options.url);
-      const recordedUrl = wavesurfer.options.url
-      this.downloadButton = $( `<a href="${recordedUrl}" class="btn btn-primary" download="recording.${blob.type.split(";")[0].split("/")[1] || "webm"}">Download recording</a>`);
+      const recordedUrl = wavesurfer.options.url;
+      const filename = `track-${this.id}.${extension}`
+      this.downloadButton = `
+        <a href="${recordedUrl}" 
+        class="btn btn-primary" 
+        id="${this.id}-download-button"
+        download="${filename}">Download</a>
+        `;
     }
     return this.downloadButton;
   }
 
   getNameInput(){
     if (!this.nameInput){
-      this.nameInput = $(`
-            <div class="form-floating">
-              <textarea id="${this.id}-name-input" class="form-control" aria-label="With textarea"></textarea>
-              <label for="${this.id}-comment">Name</span>
-            </div>        
-        `)
+      this.nameInput = `
+      <div class="input-group">
+        <div class="input-group-text" id="${this.id}-name-input-addon">Name</div>
+        <input id="${this.id}-name-input" type="text" class="form-control" placeholder="track-${this.id}" aria-label="track name input group" aria-describedby="${this.id}-name-input-addon">
+      </div>
+      `
     }
     return this.nameInput;
   }
+
+  getFilename(){
+    //TODO use this.nameInput
+    if (this.downloadButton){
+      const extension = $(this.downloadButton).attr('download').split('.')[1];
+      let inputName = $(`#${this.id}-name-input`).val();
+      if (inputName == ''){ inputName=`track-${this.id}` }  //this should never happen
+      const filename = `${inputName}.${extension}`;
+      return filename;
+    } else {
+      return;
+    }
+  }
+
+  static getExtesionFromBlob(blob){
+    return blob.type.split(";")[0].split("/")[1] || "webm"
+  }
+
+  handleNameInputChange(event){
+    //DONE handle empty name
+    let inputName = $(`#${this.id}-name-input`).val();
+    if (inputName == ''){ 
+      inputName=`track-${this.id}`
+      $(`#${this.id}-name-input`).val(inputName);
+    }
+
+    //set download attribute to new filename
+    if (this.downloadButton){   
+      const filename = this.getFilename()
+      $(this.downloadButton).attr('download', filename) //FIXME this does not work, filename is not set
+    }
+  }
+
+  getUploadButton(){
+    if (!this.uploadButton) {
+      const wavesurfer = this.waveSurferInstance;
+      const recordedUrl = wavesurfer.options.url;
+      this.uploadButton = `
+        <button href="${recordedUrl}" 
+        class="btn btn-primary" 
+        id="${this.id}-upload-button"
+        >
+          Upload
+          <span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M11 14.825V18q0 .425.288.713T12 19t.713-.288T13 18v-3.175l.9.9q.15.15.338.225t.375.063t.362-.088t.325-.225q.275-.3.288-.7t-.288-.7l-2.6-2.6q-.15-.15-.325-.212T12 11.425t-.375.063t-.325.212l-2.6 2.6q-.3.3-.287.7t.312.7q.3.275.7.288t.7-.288zM6 22q-.825 0-1.412-.587T4 20V4q0-.825.588-1.412T6 2h7.175q.4 0 .763.15t.637.425l4.85 4.85q.275.275.425.638t.15.762V20q0 .825-.587 1.413T18 22zm7-14V4H6v16h12V9h-4q-.425 0-.712-.288T13 8M6 4v5zv16z"/>
+            </svg>
+          </span>
+        </button>
+      `;
+    }
+    return this.uploadButton;
+  }  
+
+  async doAjaxSaveTrack(data){
+    let payload = {
+      name: data.name,
+      track: data.track
+    };    
+    let response;  
+    try{
+      response = await $.ajax({
+        url: '/upload',
+        type: "POST",
+        data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+      });
+      return response;
+    } catch (error) {
+      console.error(error)
+    }      
+
+  }  
+
+  handleUpload(event){
+    const id = event.target.id.split('-')[0]
+    const filename = this.getFilename() //$(`#${id}-name-input`).val()
+
+    const data = {
+      track:event.data.blob,
+      name: filename
+    }
+
+    //TODO handle upload with doAjaxSaveTrack
+    console.log(event)
+    console.log(data)
+  }
+
+  addButtonsEventListeners(blob){
+      $(`#${this.id}-name-input`).on('input', this.handleNameInputChange.bind(this))
+      $(`#${this.id}-upload-button`).on('click', null, {blob:blob}, this.handleUpload.bind(this));
+  }
 }
+
+
 
 class HoverManager {
   constructor(config) {
@@ -177,12 +283,30 @@ class RecordManager {
     const hover = new HoverManager(this.config)
     const timeline = new TimelineManager(this.config)
     const plugins = [hover.hoverInstance, timeline.timelineInstance]
+    //FIXME dragToSeek does not work, the  mediaControls max time equals what has been reproduced and not the actual track time, blob issue?
     const waveSurferManager = new WaveSurferManager({url:url, container:this.recordingsContainer}, this.config, plugins);
     const waveSurfer = waveSurferManager.initialize();
+    // waveSurfer.loadBlob(blob) //this works the same as the option {url:url} but then wavesurfer.options.url does not work
     
     // container.append( waveSurferManager.getPlayButton() );
-    $(this.recordingsContainer).append( waveSurferManager.getDownloadButton(blob) );
-    $(this.recordingsContainer).append( waveSurferManager.getNameInput() );
+    const downloadButton = waveSurferManager.getDownloadButton( WaveSurferManager.getExtesionFromBlob(blob) )
+    const uploadButton = waveSurferManager.getUploadButton()
+    const nameInput = waveSurferManager.getNameInput()
+
+    $(this.recordingsContainer).append( 
+      `
+      <div class="row justify-content-start">
+        <div class="col-4">${nameInput}</div>
+        <div class="col">
+          <div class="btn-group" role="group">
+            ${downloadButton}
+            ${uploadButton}
+          </div>
+        </div>
+      </div>
+      `
+     );
+     waveSurferManager.addButtonsEventListeners(blob)
   }
 
 }
