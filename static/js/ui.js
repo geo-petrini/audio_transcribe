@@ -231,6 +231,7 @@ class WaveSurferManager {
   }
 
   handleDownload(event){
+    //TODO implement
     event.preventDefault();
     const id = event.target.id.split('-')[0]
     const filename = this.getFilename() //$(`#${id}-name-input`).val()
@@ -333,9 +334,9 @@ class RecordManager {
 
   displayRecording(blob){
     const url = URL.createObjectURL(blob)
-    const hover = new HoverManager(this.config)
+    // const hover = new HoverManager(this.config)  //TODO try to add it again but before fix the dragToSeek issue below
     const timeline = new TimelineManager(this.config)
-    const plugins = [hover.hoverInstance, timeline.timelineInstance]
+    const plugins = [timeline.timelineInstance]
 
     //FIXME dragToSeek does not work, the  mediaControls max time equals what has been reproduced and not the actual track time, blob issue?
     const waveSurferManager = new WaveSurferManager({url:url, container:this.recordingsContainer}, this.config, plugins);
@@ -734,12 +735,17 @@ class RegionsManager {
 
   }
 
+  initRegionComments(region){
+    if (!region.data){ region.data = {comments:[]}}
+    if (!'comments' in region.data) { region.data[comments] = []}
+  }
+
   saveComment(region){
     this.doAjaxSaveComment(region).then( (response) => {
       if(!response){ return }
 
       $(`#${region.id}-comment`).data('saved', true)
-      if (!'comments' in region.data) { region.data.comments = []}
+      this.initRegionComments(region)
       region.data.comments.push( response )
       region.emit('update-end');
     } );    

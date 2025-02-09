@@ -110,14 +110,14 @@ def _handle_json_track_upload(request):
     import base64
     from werkzeug.datastructures import FileStorage
 
-    current_app.logger.debug(f'request json: {request.json}')
+    # current_app.logger.debug(f'request json: {request.json}')
     file = FileStorage(
         stream=io.BytesIO(  base64.b64decode(request.json.get('track')) ),
         filename=request.json.get('name'),
         content_type=request.json.get('type'),
         name='file'
     )
-    current_app.logger.debug(f'file: {file}')
+    # current_app.logger.debug(f'file: {file}')
     return file
     # from werkzeug.datastructures import TemporaryUploadedFile
 
