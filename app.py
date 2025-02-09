@@ -1,5 +1,7 @@
 
 import os
+import logging
+from logging import Formatter
 from flask import Flask, url_for, render_template
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -45,8 +47,14 @@ def load_user(user_id):
     
     return user
 
+def change_logger():
+    # redefining default formatter https://flask.palletsprojects.com/en/stable/logging/
+    formatter = Formatter("[%(asctime)s] %(levelname)-8s %(process)d %(thread)s %(name)s in %(filename)s %(funcName)s():%(lineno)d %(message)s")
+    app.logger.handlers[0].setFormatter(formatter)
+    app.logger.setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
     with app.app_context():
+        change_logger()
         init_db()
     app.run(debug=True)

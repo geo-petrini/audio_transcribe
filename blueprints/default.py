@@ -55,39 +55,83 @@ def upload():
 
 
 @app.route('/upload', methods=['POST'])
-def upload_form_post():
-    """Upload di un file."""
-    
-    # 1. Validazione dei dati richiesti
-    if not request.files:
-        return _handle_error('No file part')
-    
+def upload_form_post():  
+    file = None
+    local_filename = None
+    try:
+        if request.files:
+            file = _handle_file_track_upload(request)
+        elif request.json:
+            file = _handle_json_track_upload(request)
+        else:
+            return _handle_error('No file part')        
+        (filename, local_filename) = _save_file(file)
+        _save_track(filename, local_filename)
+
+        if request.files:
+            return redirect(url_for('default.play', file=local_filename))
+        elif request.json:
+            return url_for('default.play', file=local_filename)
+        
+    except Exception as e:
+        current_app.logger.exception(f'Error saving file {file} as {local_filename}')
+        return _handle_error('Error saving track')
+
+def _save_file(file):
+    # Salvataggio del file sul disco
+    filename = secure_filename(file.filename)
+    local_filename = uuid.uuid4().hex
+    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], local_filename)
+    file.save(filepath)
+    current_app.logger.info(f'file {filename} saved as {local_filename}')
+    return (filename, local_filename)
+
+def _save_track(filename, local_filename):
+    # salvataggio come record
+    track = Track(
+        name=filename,
+        local_name=local_filename
+    )
+    db.session.add(track)
+    db.session.commit()
+
+def _handle_file_track_upload(request):
     # 2. Estrazione del file dall'istanza della richiesta
     file = request.files['file']
-    
     # 3. Controllo dell'estensione del file
     if not allowed_file_ext(file.filename):
-        return _handle_error('Invalid file type')
-    
-    # 4. Salvataggio del file sul disco
-    try:
-        filename = secure_filename(file.filename)
-        local_filename = f'{uuid.uuid4().hex}.{filename.split(".")[-1]}'
-        filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], local_filename)
-        file.save(filepath)
-        
-        # 5. Creazione di un nuovo oggetto Track e salvataggio in database
-        track = Track(
-            name=filename,
-            local_name=local_filename
-        )
-        db.session.add(track)
-        db.session.commit()
-    except Exception as e:
-        current_app.logger.exception(f'Error saving file {file.filename} as {filepath}')
-    
-    # 6. Redirezione alla pagina di riproduzione con il nome del file
-    return redirect(url_for('default.play', file=local_filename))
+        return _handle_error('Invalid file type')   
+    return file 
+
+def _handle_json_track_upload(request):
+    import io
+    import base64
+    from werkzeug.datastructures import FileStorage
+
+    current_app.logger.debug(f'request json: {request.json}')
+    file = FileStorage(
+        stream=io.BytesIO(  base64.b64decode(request.json.get('track')) ),
+        filename=request.json.get('name'),
+        content_type=request.json.get('type'),
+        name='file'
+    )
+    current_app.logger.debug(f'file: {file}')
+    return file
+    # from werkzeug.datastructures import TemporaryUploadedFile
+
+    # filename = request.json.get('filename')
+    # file_data = request.json.get('track')
+    # # Costruisci il file in formato bytes
+    # with io.BytesIO(file_data) as buffer:
+    #     buffer.seek(0)
+    #     file_obj = TemporaryUploadedFile(
+    #         filename=secure_filename(filename),
+    #         content_type="text/plain",
+    #         headers={f"Content-Disposition": "attachment;filename={filename}"},
+    #         charset="utf-8"
+    #     )
+    return file_obj
+
 
 def _handle_error(message):
     """Mancanza di dati o errore durante l'upload."""

@@ -122,10 +122,10 @@ class WaveSurferManager {
     }
 
     //set download attribute to new filename
-    if (this.downloadButton){   
-      const filename = this.getFilename()
-      $(this.downloadButton).attr('download', filename) //FIXME this does not work, filename is not set
-    }
+    // if (this.downloadButton){   
+    //   const filename = this.getFilename()
+    //   $(this.downloadButton).attr('download', filename) //FIXME this does not work, filename is not set
+    // }
   }
 
   getUploadButton(){
@@ -150,10 +150,7 @@ class WaveSurferManager {
   }  
 
   async doAjaxSaveTrack(data){
-    let payload = {
-      name: data.name,
-      track: data.track
-    };    
+    let payload = data   
     let response;  
     try{
       response = await $.ajax({
@@ -175,18 +172,32 @@ class WaveSurferManager {
     const filename = this.getFilename() //$(`#${id}-name-input`).val()
 
     const data = {
-      track:event.data.blob,
+      track: btoa(event.data.blob.bytes()),
+      type: event.data.blob.type,
       name: filename
     }
 
     //TODO handle upload with doAjaxSaveTrack
-    console.log(event)
+    // console.log(event)
     console.log(data)
+
+    this.doAjaxSaveTrack(data).then( (response) => {
+      //TODO close the track and display the track link 
+      console.log(response)
+      $(`#${id}-status`).append(response)
+    });      
+  }
+
+  handleDownload(event){
+    event.preventDefault();
+    const id = event.target.id.split('-')[0]
+    const filename = this.getFilename() //$(`#${id}-name-input`).val()
   }
 
   addButtonsEventListeners(blob){
       $(`#${this.id}-name-input`).on('input', this.handleNameInputChange.bind(this))
       $(`#${this.id}-upload-button`).on('click', null, {blob:blob}, this.handleUpload.bind(this));
+      $(`#${this.id}-download-button`).on('click', this.handleDownload.bind(this));
   }
 }
 
@@ -302,6 +313,9 @@ class RecordManager {
             ${downloadButton}
             ${uploadButton}
           </div>
+        </div>
+        <div class="col">
+          <div id="${waveSurferManager.id}-status"></div>
         </div>
       </div>
       `
