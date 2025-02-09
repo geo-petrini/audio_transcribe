@@ -105,6 +105,7 @@ def _handle_file_track_upload(request):
     return file 
 
 def _handle_json_track_upload(request):
+    #BUG the content of the track stream is "[object Promise]"
     import io
     import base64
     from werkzeug.datastructures import FileStorage

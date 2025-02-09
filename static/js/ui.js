@@ -167,33 +167,67 @@ class WaveSurferManager {
 
   }  
 
+  async readBlob(blob){
+    let track;
+    try{
+      // track = await new Response(blob).bytes()
+      // track = await blob.bytes() //returns a list of bytes
+      // track = await blob.text() //returns a list of UTF-8 chars
+      var reader = new FileReader();
+      reader.readAsDataURL(blob)
+      reader.onloadend = () => {
+        let b64 = reader.result;
+        track = b64.split(',')[1]; //remove the mimetype
+        console.log(track)
+        return track;
+      }
+    } catch (error){
+      console.error()
+    }
+  }
+
   handleUpload(event){
     const id = event.target.id.split('-')[0]
     const filename = this.getFilename() //$(`#${id}-name-input`).val()
 
-    const data = {
-      track: btoa(event.data.blob.bytes()),
-      type: event.data.blob.type,
-      name: filename
-    }
+    //BUG btoa is saving a Promise of bytes, not the actual content
+    // const track = this.readBlob(event.data.blob)
 
-    //TODO handle upload with doAjaxSaveTrack
-    // console.log(event)
-    console.log(data)
+    var reader = new FileReader();
+    reader.readAsDataURL(event.data.blob)
+    reader.onloadend = () => {
+      let b64 = reader.result;
+      let track = b64.split(',')[1]; //remove the mimetype
+      console.log(track)
+      
 
-    this.doAjaxSaveTrack(data).then( (response) => {
-      //TODO close the track and display the track link 
-      console.log(response)
-      $(`#${id}-status`).append(response)
 
-      if ('url' in response){
-        this.waveSurferInstance.destroy()
-        $(`#${this.id}-controls`).remove()
-        $(`#${this.id}`).append(
-          `<a class="btn btn-primary" href="${response.url}">Open <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M6 22q-.825 0-1.412-.587T4 20V4q0-.825.588-1.412T6 2h7.175q.4 0 .763.15t.637.425l4.85 4.85q.275.275.425.638t.15.762V13q0 .425-.288.713T19 14t-.712-.288T18 13V9h-4q-.425 0-.712-.288T13 8V4H6v16h8q.425 0 .713.288T15 21t-.288.713T14 22zm13-2.575v1.225q0 .425-.288.713T18 21.65t-.712-.287T17 20.65V17q0-.425.288-.712T18 16h3.65q.425 0 .713.288t.287.712t-.287.713t-.713.287H20.4l2.25 2.25q.275.275.275.688t-.275.712q-.3.3-.712.3t-.713-.3zM6 20V4z"></path></svg></span></a>`
-        )
+    // this.readBlob(event.data.blob).then( (track) => {
+      const data = {
+        track: track, //track coming from readBlob is already b64
+        type: event.data.blob.type,
+        name: filename
       }
-    });      
+
+      console.log(data)
+
+      this.doAjaxSaveTrack(data).then( (response) => {
+        //TODO close the track and display the track link 
+        console.log(response)
+        $(`#${id}-status`).append(response)
+
+        if ('url' in response){
+          this.waveSurferInstance.destroy()
+          $(`#${this.id}-controls`).remove()
+          $(`#${this.id}`).append(
+            `<a class="btn btn-primary" href="${response.url}">Open <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M6 22q-.825 0-1.412-.587T4 20V4q0-.825.588-1.412T6 2h7.175q.4 0 .763.15t.637.425l4.85 4.85q.275.275.425.638t.15.762V13q0 .425-.288.713T19 14t-.712-.288T18 13V9h-4q-.425 0-.712-.288T13 8V4H6v16h8q.425 0 .713.288T15 21t-.288.713T14 22zm13-2.575v1.225q0 .425-.288.713T18 21.65t-.712-.287T17 20.65V17q0-.425.288-.712T18 16h3.65q.425 0 .713.288t.287.712t-.287.713t-.713.287H20.4l2.25 2.25q.275.275.275.688t-.275.712q-.3.3-.712.3t-.713-.3zM6 20V4z"></path></svg></span></a>`
+          )
+        }
+      });   
+      
+    }
+    
+  
   }
 
   handleDownload(event){
