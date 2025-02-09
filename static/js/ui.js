@@ -797,6 +797,10 @@ class UIManager {
     });
 
   }
+
+  static getTrackName(){
+    //TODO load from /track/<file>/name
+  }
 }
 
 class DescriptionManager{

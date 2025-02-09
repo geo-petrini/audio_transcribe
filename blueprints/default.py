@@ -105,7 +105,6 @@ def _handle_file_track_upload(request):
     return file 
 
 def _handle_json_track_upload(request):
-    #BUG the content of the track stream is "[object Promise]"
     import io
     import base64
     from werkzeug.datastructures import FileStorage
@@ -119,20 +118,6 @@ def _handle_json_track_upload(request):
     )
     # current_app.logger.debug(f'file: {file}')
     return file
-    # from werkzeug.datastructures import TemporaryUploadedFile
-
-    # filename = request.json.get('filename')
-    # file_data = request.json.get('track')
-    # # Costruisci il file in formato bytes
-    # with io.BytesIO(file_data) as buffer:
-    #     buffer.seek(0)
-    #     file_obj = TemporaryUploadedFile(
-    #         filename=secure_filename(filename),
-    #         content_type="text/plain",
-    #         headers={f"Content-Disposition": "attachment;filename={filename}"},
-    #         charset="utf-8"
-    #     )
-    return file_obj
 
 
 def _handle_error(message):
@@ -140,6 +125,12 @@ def _handle_error(message):
     flash(message)
     current_app.logger.error(message)
     return redirect(request.url)
+
+@app.route('/track/<file>/name')
+def track_name(file):
+    track = Track.query.filter(Track.local_name == file).first()
+    return jsonify( {'name':track.name})
+
 
 @app.route('/track/<file>/regions', methods=['GET'])
 def track_regions_load(file):
