@@ -71,7 +71,8 @@ def upload_form_post():
         if request.files:
             return redirect(url_for('default.play', file=local_filename))
         elif request.json:
-            return url_for('default.play', file=local_filename)
+            response = {'url':url_for('default.play', file=local_filename)}
+            return jsonify(response)
         
     except Exception as e:
         current_app.logger.exception(f'Error saving file {file} as {local_filename}')

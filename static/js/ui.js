@@ -185,6 +185,14 @@ class WaveSurferManager {
       //TODO close the track and display the track link 
       console.log(response)
       $(`#${id}-status`).append(response)
+
+      if ('url' in response){
+        this.waveSurferInstance.destroy()
+        $(`#${this.id}-controls`).remove()
+        $(`#${this.id}`).append(
+          `<a class="btn btn-primary" href="${response.url}">Open <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M6 22q-.825 0-1.412-.587T4 20V4q0-.825.588-1.412T6 2h7.175q.4 0 .763.15t.637.425l4.85 4.85q.275.275.425.638t.15.762V13q0 .425-.288.713T19 14t-.712-.288T18 13V9h-4q-.425 0-.712-.288T13 8V4H6v16h8q.425 0 .713.288T15 21t-.288.713T14 22zm13-2.575v1.225q0 .425-.288.713T18 21.65t-.712-.287T17 20.65V17q0-.425.288-.712T18 16h3.65q.425 0 .713.288t.287.712t-.287.713t-.713.287H20.4l2.25 2.25q.275.275.275.688t-.275.712q-.3.3-.712.3t-.713-.3zM6 20V4z"></path></svg></span></a>`
+        )
+      }
     });      
   }
 
@@ -294,28 +302,36 @@ class RecordManager {
     const hover = new HoverManager(this.config)
     const timeline = new TimelineManager(this.config)
     const plugins = [hover.hoverInstance, timeline.timelineInstance]
+
     //FIXME dragToSeek does not work, the  mediaControls max time equals what has been reproduced and not the actual track time, blob issue?
     const waveSurferManager = new WaveSurferManager({url:url, container:this.recordingsContainer}, this.config, plugins);
+    //dirty workaround to assign the container after getting the id from WaveSurferManager
+    // let container = `<div id="${waveSurferManager.id}"></div>`
+    // $(this.recordingsContainer).append( container )
+    // waveSurferManager.options.container = `#${waveSurferManager.id}`
+    //end of dirty workaround
+
     const waveSurfer = waveSurferManager.initialize();
     // waveSurfer.loadBlob(blob) //this works the same as the option {url:url} but then wavesurfer.options.url does not work
     
-    // container.append( waveSurferManager.getPlayButton() );
     const downloadButton = waveSurferManager.getDownloadButton( WaveSurferManager.getExtesionFromBlob(blob) )
     const uploadButton = waveSurferManager.getUploadButton()
     const nameInput = waveSurferManager.getNameInput()
 
     $(this.recordingsContainer).append( 
       `
-      <div class="row justify-content-start">
-        <div class="col-4">${nameInput}</div>
-        <div class="col">
-          <div class="btn-group" role="group">
-            ${downloadButton}
-            ${uploadButton}
+     <div id="${waveSurferManager.id}">
+        <div id="${waveSurferManager.id}-controls" class="row justify-content-start">
+          <div class="col-4">${nameInput}</div>
+          <div class="col">
+            <div class="btn-group" role="group">
+              ${downloadButton}
+              ${uploadButton}
+            </div>
           </div>
-        </div>
-        <div class="col">
-          <div id="${waveSurferManager.id}-status"></div>
+          <div class="col">
+            <div id="${waveSurferManager.id}-status"></div>
+          </div>
         </div>
       </div>
       `
