@@ -1,0 +1,7 @@
+uploads/*
+instance/*
+*.md
+*/*__pycache__
+.venv
+_ref
+_nicegui
