@@ -61,8 +61,7 @@ $(document).ready(function () {
     }
   });
 
-  //TODO update to regions.on("region-update", updateRegionCard)
-  regions.on("region-update", (region) => {
+    regions.on("region-update", (region) => {
     // console.log("Updating region", region);
     updateRegionCard(region);
   });
@@ -142,11 +141,8 @@ function createRegion(json) {
   updateRegionCard(region);
 }
 
-function renderRegionCards() {
-  //TODO loop all regions.getRegions()
-}
-
 function renderRegionCard(region) {
+  //TODO refactor as class
   $("#regions-container").append(`
     <div id="${region.id}">
       <div class="accordion-item">
@@ -477,6 +473,7 @@ function saveComment(region){
 }
 
 function resetCommentInputField(region){
+  //TODO refactor as class
   region = getRegion(region)
   if (region) {
     let saved = $(`#${region.id}-comment`).data('saved')

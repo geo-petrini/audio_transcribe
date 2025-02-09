@@ -11,11 +11,11 @@ from flask import request
 from flask import current_app
 from flask import send_from_directory
 from flask import jsonify
-
+from werkzeug.utils import secure_filename
 from models.conn import db
 from models.models import Track, Region, Comment
 
-import modules.filechecker as filechecker
+from modules.filechecker import allowed_file_ext
 
 app = Blueprint('default', __name__)
 
@@ -37,10 +37,12 @@ def hello_anonimo():
 def list():
     # TODO load number of comments
     tracks = Track.query.all()
+    current_app.logger.debug(f'tracks list: {tracks}')
     return render_template('list.html', tracks=tracks)
 
 @app.route('/track/<file>/play')
 def play(file):
+    # TODO check return as track is not used in the template anymore
     track = Track.query.filter(Track.local_name == file).first()
     return render_template('play.html', track=track)
 
@@ -52,39 +54,84 @@ def track(filename):
 def upload():
     return render_template('upload.html')
 
-@app.route('/upload', methods=['POST'])
-def upload_form_post():
-    if 'file' not in request.files:
-        flash('No file part')
-        return redirect(request.url)    
-    
-    file = request.files['file']
-    if file.filename == '':
-        flash('No selected file')
-        current_app.logger.error('No selected file')
-        return redirect(request.url)
-    
-    if not filechecker.allowed_file_ext(file.filename):
-        flash('Invalid file type')
-        current_app.logger.error(f'Invalid file type for file {file.filename}')
-        return redirect(request.url)
-    
-    if file:
-        try:
-            local_filename = uuid.uuid4().hex
-            # filename = f'{uuid.uuid4().hex}.{filechecker.get_file_ext(file.filename)}'
-            filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], local_filename)
-            file.save(filepath)
 
-            track = Track(
-                name=file.filename,
-                local_name = local_filename)
-            db.session.add(track)
-            db.session.commit()
-        except Exception as e:
-            current_app.logger.exception(f'Error saving file {file.filename} as {filepath}')
-        return redirect(url_for('default.play', file=local_filename))
-    return None
+@app.route('/upload', methods=['POST'])
+def upload_form_post():  
+    file = None
+    local_filename = None
+    try:
+        if request.files:
+            file = _handle_file_track_upload(request)
+        elif request.json:
+            file = _handle_json_track_upload(request)
+        else:
+            return _handle_error('No file part')        
+        (filename, local_filename) = _save_file(file)
+        _save_track(filename, local_filename)
+
+        if request.files:
+            return redirect(url_for('default.play', file=local_filename))
+        elif request.json:
+            response = {'url':url_for('default.play', file=local_filename)}
+            return jsonify(response)
+        
+    except Exception as e:
+        current_app.logger.exception(f'Error saving file {file} as {local_filename}')
+        return _handle_error('Error saving track')
+
+def _save_file(file):
+    # Salvataggio del file sul disco
+    filename = secure_filename(file.filename)
+    local_filename = uuid.uuid4().hex
+    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], local_filename)
+    file.save(filepath)
+    current_app.logger.info(f'file {filename} saved as {local_filename}')
+    return (filename, local_filename)
+
+def _save_track(filename, local_filename):
+    # salvataggio come record
+    track = Track(
+        name=filename,
+        local_name=local_filename
+    )
+    db.session.add(track)
+    db.session.commit()
+
+def _handle_file_track_upload(request):
+    # 2. Estrazione del file dall'istanza della richiesta
+    file = request.files['file']
+    # 3. Controllo dell'estensione del file
+    if not allowed_file_ext(file.filename):
+        return _handle_error('Invalid file type')   
+    return file 
+
+def _handle_json_track_upload(request):
+    import io
+    import base64
+    from werkzeug.datastructures import FileStorage
+
+    # current_app.logger.debug(f'request json: {request.json}')
+    file = FileStorage(
+        stream=io.BytesIO(  base64.b64decode(request.json.get('track')) ),
+        filename=request.json.get('name'),
+        content_type=request.json.get('type'),
+        name='file'
+    )
+    # current_app.logger.debug(f'file: {file}')
+    return file
+
+
+def _handle_error(message):
+    """Mancanza di dati o errore durante l'upload."""
+    flash(message)
+    current_app.logger.error(message)
+    return redirect(request.url)
+
+@app.route('/track/<file>/name')
+def track_name(file):
+    track = Track.query.filter(Track.local_name == file).first()
+    return jsonify( {'name':track.name})
+
 
 @app.route('/track/<file>/regions', methods=['GET'])
 def track_regions_load(file):

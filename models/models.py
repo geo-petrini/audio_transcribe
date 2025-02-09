@@ -28,7 +28,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))  # Campo per la password criptata
 
     # Relazione many-to-many tra User e Role
-    roles = db.relationship('Role', secondary=user_roles, backref=db.backref('users', lazy='dynamic'))
+    roles = db.relationship('Role', secondary=user_roles, backref=db.backref('users', lazy='joined')) #TODO chk se lazy='dynamic' funziona
 
     def __str__(self):
         return f'{self.id}'
@@ -56,10 +56,13 @@ class Track(db.Model):
     user_id = db.Column(db.Integer() , db.ForeignKey('user.id'))
 
     # Relazione tra User e Post
-    user = db.relationship('User', backref=db.backref('posts', lazy=True))    
+    user = db.relationship('User', backref=db.backref('posts', lazy='joined'))    
+    regions = db.relationship('Region', backref=db.backref('tracks', lazy='joined'))   
 
     def __str__(self):
-        return f'{self.id}'
+        return f'Track (id:{self.id}, name:"{self.name}")'
+    def __repr__(self):
+        return f'Track (id:{self.id}, name:"{self.name}")'
         
 class Region(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -69,6 +72,8 @@ class Region(db.Model):
     start = db.Column( db.Integer() )
     end = db.Column( db.Integer() )
     track_id = db.Column(db.String(16), ForeignKey('track.id'))
+
+    comments = db.relationship('Comment', backref=db.backref('comments', lazy='joined'))   #TODO chk se lazy='joined' funziona
     
     def to_json(self):
         return json.dumps( self.to_dict() )

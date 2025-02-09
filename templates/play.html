@@ -6,50 +6,34 @@
 <script src="{{url_for('static', filename='js/wavesurfer/7/plugins/regions.min.js')}}"></script>
 <script src="{{url_for('static', filename='js/wavesurfer/7/plugins/hover.min.js')}}"></script>
 <script src="{{url_for('static', filename='js/wavesurfer/7/plugins/timeline.min.js')}}"></script>
-<script src="{{url_for('static', filename='js/play.js')}}"></script>
-
+<script src="{{url_for('static', filename='js/ui.js')}}"></script>
 
 {% endblock %} 
 
 {% block content %}
 <div class="row">
   <div class="col">
-    
-      <h2>Filename: {{track.name}}
-        <div class="spinner-border" role="status" id="waveform-spinner">
-          <span class="visually-hidden">Loading...</span>
-        </div>
-      </h2>
-    
-
+    <h2>Filename: <span id="track-name">{{track.name}}</span>
+      <div class="spinner-border" role="status" id="waveform-spinner">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </h2>
     <div id="waveform"></div>
-    <!-- <button id="toggle_description_button" class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#description-container" aria-expanded="false" aria-controls="collapseWidthExample">
-      Add description
-    </button> -->
-    <button id="add_section_button" class="btn btn-primary float-end" href="#">
+    <button id="add-section-button" class="btn btn-primary float-end" href="#">
       New Section <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 18l-4.2 1.8q-1 .425-1.9-.162T5 17.975V5q0-.825.588-1.412T7 3h5q.425 0 .713.288T13 4t-.288.713T12 5H7v12.95l5-2.15l5 2.15V12q0-.425.288-.712T18 11t.713.288T19 12v5.975q0 1.075-.9 1.663t-1.9.162zm0-13H7h6zm5 2h-1q-.425 0-.712-.288T15 6t.288-.712T16 5h1V4q0-.425.288-.712T18 3t.713.288T19 4v1h1q.425 0 .713.288T21 6t-.288.713T20 7h-1v1q0 .425-.288.713T18 9t-.712-.288T17 8z"/></svg></span>
     </button>    
-    <!-- <div id="add_section_help_1" style="display: none">
-      Drag on track to add and edit a new section
-    </div>
-    <div id="add_section_help_2" style="display: none">
-      Drag track to edit the time frame
-    </div> -->
-
   </div>
 </div>
 
 <div class="row">
   <div class="col">
-
-    <!-- <div id="description-container" class="collapse"> -->
     <div id="description-container">
       <div id="description-content"></div>
       <div id="description-form" class="form-floating">
         <textarea class="form-control" id="description-textarea"></textarea>
         <label for="description-textarea">Description</label>
       </div>
-      <button id="save_description_button" class="btn btn-primary">Save description <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M11 11v2q0 .425.288.713T12 14t.713-.288T13 13v-2h2q.425 0 .713-.288T16 10t-.288-.712T15 9h-2V7q0-.425-.288-.712T12 6t-.712.288T11 7v2H9q-.425 0-.712.288T8 10t.288.713T9 11zm-5 7l-2.3 2.3q-.475.475-1.088.213T2 19.575V4q0-.825.588-1.412T4 2h16q.825 0 1.413.588T22 4v12q0 .825-.587 1.413T20 18zm-.85-2H20V4H4v13.125zM4 16V4z"/></svg></span></button>
+      <button id="save-description-button" class="btn btn-primary">Save description <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M11 11v2q0 .425.288.713T12 14t.713-.288T13 13v-2h2q.425 0 .713-.288T16 10t-.288-.712T15 9h-2V7q0-.425-.288-.712T12 6t-.712.288T11 7v2H9q-.425 0-.712.288T8 10t.288.713T9 11zm-5 7l-2.3 2.3q-.475.475-1.088.213T2 19.575V4q0-.825.588-1.412T4 2h16q.825 0 1.413.588T22 4v12q0 .825-.587 1.413T20 18zm-.85-2H20V4H4v13.125zM4 16V4z"/></svg></span></button>
     </div>
   </div>
 </div>
@@ -57,12 +41,46 @@
 </div>
 <div class="row">
   <div class="col">
- 
     <div id="regions-container" class="accordion">
-     
-       
     </div>
   </div>
 </div>
+
+<script>
+  $(document).ready(function () {
+    initialize()
+  });
+
+  function initialize(){
+    const config = new WaveSurferConfig();
+
+    const hover = new HoverManager(config)
+    const timeline = new TimelineManager(config)
+    const regionsManager = new RegionsManager(config);
+    const descriptionManager = new DescriptionManager(config)
+
+    const plugins = [hover.hoverInstance, timeline.timelineInstance, regionsManager.regionsInstance]
+
+    const waveSurferManager = new WaveSurferManager({container:"#waveform", url:UrlManager.getFileUrl()}, config, plugins);
+    const waveSurfer = waveSurferManager.initialize();
+
+    regionsManager.setWsReference(waveSurfer)
+    regionsManager.addEventListeners();
+
+    descriptionManager.loadDescription()
+
+    waveSurfer.on("ready", () => {
+      regionsManager.loadRegions();
+      $("#waveform-spinner").hide();
+    });  
+    
+
+    UIManager.bindButtonEvents(regionsManager);
+
+    waveSurfer.on("ready", () => {
+      console.log("WaveSurfer is ready");
+    });
+  }  
+</script>
 
 {% endblock %}
