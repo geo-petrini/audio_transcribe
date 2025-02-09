@@ -5,3 +5,4 @@ instance/*
 .venv
 _ref
 _nicegui
+.git

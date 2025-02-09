@@ -57,4 +57,4 @@ if __name__ == '__main__':
     with app.app_context():
         change_logger()
         init_db()
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0')

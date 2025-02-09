@@ -30,3 +30,4 @@ The application currently is under heavy development and the list of things to d
 - add audio recording directly in the website
     - record as push button
     - SKIPPED record with toggle button
+- Docker image (tried python:3.11-bookworm but the image is 1.5GB, so I switched to alpine )
