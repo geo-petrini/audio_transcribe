@@ -47,6 +47,13 @@ class User(UserMixin, db.Model):
         out = f'User(id={self.id}, username={self.username}, email={self.email})'
         return out
     
+    def to_dict(self):
+        out = {
+            'username' : self.username,
+            'email' : self.email
+        }
+        return out        
+    
     def set_password(self, password):
         """Imposta la password criptata."""
         self.password_hash = generate_password_hash(password)
@@ -65,8 +72,8 @@ class Track(db.Model, Timestamped):
     user_id = db.Column(db.Integer() , ForeignKey('user.id'))
 
     # Relazione tra User e Post
-    user = db.relationship('User', backref=db.backref('posts', lazy='joined'))    
-    regions = db.relationship('Region', backref=db.backref('tracks', lazy='joined'))   
+    user = db.relationship('User', backref=db.backref('track_user', lazy='joined'))    
+    regions = db.relationship('Region', backref=db.backref('track_regions', lazy='joined'))   
 
 
     def __str__(self):
@@ -84,7 +91,8 @@ class Region(db.Model, Timestamped):
     track_id = db.Column(db.String(16), ForeignKey('track.id'))
     user_id = db.Column(db.Integer() , ForeignKey('user.id'))
 
-    comments = db.relationship('Comment', backref=db.backref('comments', lazy='joined'))   #TODO chk se lazy='joined' funziona
+    user = db.relationship('User', backref=db.backref('region_user', lazy='joined'))   
+    comments = db.relationship('Comment', backref=db.backref('region_comments', lazy='joined'))   #TODO chk se lazy='joined' funziona
     
     def to_json(self):
         return json.dumps( self.to_dict() )
@@ -108,6 +116,8 @@ class Comment(db.Model, Timestamped):
     region_id = db.Column(db.String(16), ForeignKey('region.id'))
     user_id = db.Column(db.Integer() , ForeignKey('user.id'))
     
+    user = db.relationship('User', backref=db.backref('user_comments', lazy='joined'))   
+    
     def to_json(self):
         return json.dumps( self.to_dict() )
     
@@ -117,7 +127,8 @@ class Comment(db.Model, Timestamped):
             'text' : self.text,
             'track_id' : self.track_id,
             'region_id' : self.region_id,
-            'ts': self.ts_add
+            'ts': self.ts_add,
+            'user': self.user.to_dict()
         }
         return out     
 
