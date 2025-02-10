@@ -1,5 +1,8 @@
 /__pycache__
 /*/__pycache__
+/migrations/versions/__pycache__
+!/migrations/versions/*.py
+/migrations/__pycache__
 /.venv*
 /_nicegui
 /.vscode
