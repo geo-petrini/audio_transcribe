@@ -69,6 +69,11 @@ def signup_post():
         # display some kind of error
         flash('User with this email address already exists')
         return redirect(url_for('auth.signup'))
+    
+    user = User.query.filter_by(username=username).first() # if this returns a user, then the email already exists in database
+    if user: 
+        flash('User with this username already exists')
+        return redirect(url_for('auth.signup'))    
 
     user = User(username=username, email=email)
     user.set_password(password)  # Imposta la password criptata
