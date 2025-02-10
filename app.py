@@ -41,7 +41,8 @@ login_manager.init_app(app)
 def load_user(user_id):
     # since the user_id is just the primary key of our user table, use it in the query for the user
     stmt = db.select(User).filter_by(id=user_id)
-    user = db.session.execute(stmt).scalar_one_or_none()
+    # unique is necessary because of joins https://stackoverflow.com/questions/74179020/the-unique-method-must-be-invoked-on-this-result-exception-raised-after-sqlalc
+    user = db.session.execute(stmt).unique().scalar_one_or_none()
     
     # return User.query.get(int(user_id))   # legacy
     
