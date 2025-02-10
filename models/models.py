@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 import json
 from flask_login import UserMixin
@@ -72,6 +73,7 @@ class Region(db.Model):
     start = db.Column( db.Integer() )
     end = db.Column( db.Integer() )
     track_id = db.Column(db.String(16), ForeignKey('track.id'))
+    user_id = db.Column(db.Integer() , db.ForeignKey('user.id'))
 
     comments = db.relationship('Comment', backref=db.backref('comments', lazy='joined'))   #TODO chk se lazy='joined' funziona
     
@@ -96,6 +98,7 @@ class Comment(db.Model):
     text = db.Column(db.String(1000) )
     track_id = db.Column(db.String(16), ForeignKey('track.id'))
     region_id = db.Column(db.String(16), ForeignKey('region.id'))
+    user_id = db.Column(db.Integer() , db.ForeignKey('user.id'))
     
     def to_json(self):
         return json.dumps( self.to_dict() )
@@ -128,7 +131,7 @@ def init_db():  #vecchio stile
     # Verifica se l'utente admin esiste già
     if not User.query.filter_by(username='admin').first():
         admin_user = User(username="admin", email="admin@example.com")
-        admin_user.set_password("adminpassword")
+        admin_user.set_password( os.getenv('ADMIN_PASSWORD', 'adminpassword') )
         admin_user.roles.append(Role.query.filter_by(name='admin').first())
         
         db.session.add(admin_user)
