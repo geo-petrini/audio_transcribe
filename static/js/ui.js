@@ -779,7 +779,7 @@ class RegionsManager {
     container.append(
       `
       <div id="comment-${comment.id}">
-        <p class="text-secondary">${secondsToTimestamp(comment.ts, true)}</p>
+        <p><span class="text-info">${comment.user.username}</span>  <span class="text-secondary">${secondsToTimestamp(comment.ts, true)}</span></p>
         <p class="text-pre">${comment.text}</p>
         <hr>
       </div>
