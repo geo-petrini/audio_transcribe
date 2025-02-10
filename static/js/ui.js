@@ -462,52 +462,67 @@ class RegionsManager {
   renderRegionCard(region) {
     //TODO refactor as class
     //DONE do not append, insert to the top of the container
-    $("#regions-container").prepend(`
+    const region_header = `
+      <div class="accordion-header">
+        <button class="accordion-button collapsed d-flex" type="button" data-bs-toggle="collapse" data-bs-target="#${region.id}-collapse" aria-expanded="true" aria-controls="${region.id}-collapse">
+          <span class="flex-grow-1"><strong id="${region.id}-content">${region.content}</strong></span>
+          <span class="">
+            <strong>Time frame</strong>: <span id="${region.id}-start">${secondsToTimestamp(region.start)}</span>
+            - 
+            <span id="${region.id}-end">${secondsToTimestamp(region.end)}</span>, 
+            <strong>Duration</strong>: <span id="${region.id}-duration">${secondsToTimestamp(region.end - region.start)}</span>
+          </span>
+        </button>        
+      </div>    
+    `
+
+    const region_form = `
+      <div id="${region.id}-form" class="input-group mb-3">
+        <span class="input-group-text" for="${region.id}-content-form">Title</span>
+        <input type="text" class="form-control" id="${region.id}-content-form" value="${region.content}">
+        <button type="button" id="${region.id}-save" href="#" class="btn btn-primary");">Save Region <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 18l-4.2 1.8q-1 .425-1.9-.162T5 17.975V5q0-.825.588-1.412T7 3h5q.425 0 .713.288T13 4t-.288.713T12 5H7v12.95l5-2.15l5 2.15V12q0-.425.288-.712T18 11t.713.288T19 12v5.975q0 1.075-.9 1.663t-1.9.162zm0-13H7h6zm5 2h-1q-.425 0-.712-.288T15 6t.288-.712T16 5h1V4q0-.425.288-.712T18 3t.713.288T19 4v1h1q.425 0 .713.288T21 6t-.288.713T20 7h-1v1q0 .425-.288.713T18 9t-.712-.288T17 8z"/></svg></span></button>
+      </div>    
+    `
+
+    const region_comment_form = `
+      <div class="input-group mb-3">
+        <span class="input-group-text" for="${region.id}-comment">Comment</span>
+        <textarea id="${region.id}-comment" class="form-control"></textarea>
+        <button type="button" id="${region.id}-save-comment" href="#" class="btn btn-primary">Save Comment <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 18l-4.2 1.8q-1 .425-1.9-.162T5 17.975V5q0-.825.588-1.412T7 3h5q.425 0 .713.288T13 4t-.288.713T12 5H7v12.95l5-2.15l5 2.15V12q0-.425.288-.712T18 11t.713.288T19 12v5.975q0 1.075-.9 1.663t-1.9.162zm0-13H7h6zm5 2h-1q-.425 0-.712-.288T15 6t.288-.712T16 5h1V4q0-.425.288-.712T18 3t.713.288T19 4v1h1q.425 0 .713.288T21 6t-.288.713T20 7h-1v1q0 .425-.288.713T18 9t-.712-.288T17 8z"/></svg></span></button>
+      </div>      
+    `
+    const region_card = `
       <div id="${region.id}">
         <div class="accordion-item">
-          <div class="accordion-header">
-            <button class="accordion-button collapsed d-flex" type="button" data-bs-toggle="collapse" data-bs-target="#${region.id}-collapse" aria-expanded="true" aria-controls="${region.id}-collapse">
-              <span class="flex-grow-1"><strong id="${region.id}-content">${region.content}</strong></span>
-              <span class="">
-                <strong>Time frame</strong>: <span id="${region.id}-start">${secondsToTimestamp(region.start)}</span>
-                - 
-                <span id="${region.id}-end">${secondsToTimestamp(region.end)}</span>, 
-                <strong>Duration</strong>: <span id="${region.id}-duration">${secondsToTimestamp(region.end - region.start)}</span>
-              </span>
-            </button>        
-          </div>
+          ${region_header}
           <div id="${region.id}-collapse" class="accordion-collapse collapse" data-bs-parent="#regions-container">
             <div class="accordion-body">
-            <p class="card-text">
-              <div class="form-floating">
-                <input type="text" class="form-control" id="${region.id}-content-form" value="${region.content}">
-                <label for="${region.id}-content-form">Title</label>
-              </div>
-            </p>
-            <a id="${region.id}-save" href="#" class="btn btn-primary");">Save Section <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 18l-4.2 1.8q-1 .425-1.9-.162T5 17.975V5q0-.825.588-1.412T7 3h5q.425 0 .713.288T13 4t-.288.713T12 5H7v12.95l5-2.15l5 2.15V12q0-.425.288-.712T18 11t.713.288T19 12v5.975q0 1.075-.9 1.663t-1.9.162zm0-13H7h6zm5 2h-1q-.425 0-.712-.288T15 6t.288-.712T16 5h1V4q0-.425.288-.712T18 3t.713.288T19 4v1h1q.425 0 .713.288T21 6t-.288.713T20 7h-1v1q0 .425-.288.713T18 9t-.712-.288T17 8z"/></svg></span></a>
+            ${region_form}
             <div id="${region.id}-comments-form-container" class="d-none">
-              <div class="form-floating">
-                <textarea id="${region.id}-comment" class="form-control" aria-label="With textarea"></textarea>
-                <label for="${region.id}-comment">Comment</span>
-              </div>
-              <a id="${region.id}-save-comment" href="#" class="btn btn-primary float-end");">Save Comment <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m6 17l-2.15 2.15q-.25.25-.55.125T3 18.8V5q0-.825.588-1.412T5 3h12q.825 0 1.413.588T19 5v4.025q0 .425-.288.7T18 10t-.712-.288T17 9V5H5v10h6q.425 0 .713.288T12 16t-.288.713T11 17zm2-8h6q.425 0 .713-.288T15 8t-.288-.712T14 7H8q-.425 0-.712.288T7 8t.288.713T8 9m0 4h3q.425 0 .713-.288T12 12t-.288-.712T11 11H8q-.425 0-.712.288T7 12t.288.713T8 13m9 4h-2q-.425 0-.712-.288T14 16t.288-.712T15 15h2v-2q0-.425.288-.712T18 12t.713.288T19 13v2h2q.425 0 .713.288T22 16t-.288.713T21 17h-2v2q0 .425-.288.713T18 20t-.712-.288T17 19zM5 15V5z"/></svg></span></a>
+              ${region_comment_form}
+              
             </div>
             <div id="${region.id}-comments-container">
             </div>
           </div>
         </div>
       </div>
-      `);
+    `
+    if (region.drag == true){
+      $("#regions-container").prepend(region_card);
+    } else {
+      $("#regions-container").append(region_card);
+    }
   
-      $(`#${region.id}-collapse`).on('shown.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
-      $(`#${region.id}-collapse`).on('hide.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
-      $(`#${region.id}-save`).on('click', null, {region:region}, this.handleSaveRegion.bind(this));
-      $(`#${region.id}-content-form`).on('input', null, {region:region}, this.handleRegionUpdate.bind(this));
-      $(`#${region.id}-save-comment`).on('click', null, {region:region}, this.handleSaveComment.bind(this));
+    $(`#${region.id}-collapse`).on('shown.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
+    $(`#${region.id}-collapse`).on('hide.bs.collapse', null, {region:region, ws:this.ws}, this.handleRegionToggle);
+    $(`#${region.id}-save`).on('click', null, {region:region}, this.handleSaveRegion.bind(this));
+    $(`#${region.id}-content-form`).on('input', null, {region:region}, this.handleRegionUpdate.bind(this));
+    $(`#${region.id}-save-comment`).on('click', null, {region:region}, this.handleSaveComment.bind(this));
 
-      if (region.drag == true){
-        this.openRegionCard(region)
-      }
+    if (region.drag == true){
+      this.openRegionCard(region)
+    }
   }  
 
   handleRegionUpdate(event) {
@@ -545,6 +560,7 @@ class RegionsManager {
       $(`#${region.id}-content-form`).attr("disabled", true);
       $(`#${region.id}-content-form`).text( this.getRegionTitle(region) )
       $(`#${region.id}-content-form`).hide(  )
+      $(`#${region.id}-form`).hide(  )
   
       //hide and disable the save button
       $(`#${region.id}-save`).attr("disabled", true);
@@ -660,6 +676,7 @@ class RegionsManager {
 
   handleSaveRegion(event){
     this.saveRegion(event.data.region)
+    //TODO sort ragion cards
     this.enableCreate(false)
   }
 
@@ -838,16 +855,16 @@ class DescriptionManager{
 
   renderDescription(description){
     $('#description-form').hide()
-    $('#save-description-button').hide()
-  
-    $('#description-content').append( secondsToTimestamp(description.ts, true) )
+    $('#save-description-button').hide() //not necessary as part of #description-form
+    
+    $('#description-content').append(`<p><span class="text-info">${description.user.username}</span>  <span class="text-secondary">${secondsToTimestamp(description.ts, true)}</span></p> ` )
     $('#description-content').append( `<div class="text-pre" id="description-text-full">${description.text}</div>` )
     if (description.text.length > 560){
       $('#description-content').append( `<div class="text-pre" id="description-text-short">${description.text.slice(0, 560)}</div>` )
-      $('#description-content').append('<button id="description-text-toggle-button" type="button" class="btn btn-sm">Show more</button>   ')
+      $('#description-content').append('<button id="description-text-toggle-button" type="button" class="btn btn-sm float-end">Show more</button>   ')
       $('#description-text-full').hide()
 
-      $('#description-content').on('click', this.handleToggleDescriptionText)
+      $('#description-text-toggle-button').on('click', this.handleToggleDescriptionText)
     }
   }
 

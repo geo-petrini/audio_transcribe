@@ -192,7 +192,8 @@ def track_description_save(file):
     track = Track.query.filter(Track.local_name == file).first()   
     comment = Comment(
         track_id = track.id,
-        text = request.json.get('text')
+        text = request.json.get('text'),
+        user_id=current_user.id if not current_user.is_anonymous else _getAnonymous().id
     ) 
     db.session.add(comment)
     db.session.commit()
