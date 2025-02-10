@@ -3,6 +3,7 @@ instance/*
 *.md
 */*__pycache__
 .venv
+_doc
 _ref
 _nicegui
 .git
