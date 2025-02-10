@@ -11,9 +11,10 @@ from flask import request
 from flask import current_app
 from flask import send_from_directory
 from flask import jsonify
+from flask_login import current_user
 from werkzeug.utils import secure_filename
 from models.conn import db
-from models.models import Track, Region, Comment
+from models.models import Track, Region, Comment, User, _getAnonymous
 
 from modules.filechecker import allowed_file_ext
 
@@ -88,11 +89,12 @@ def _save_file(file):
     current_app.logger.info(f'file {filename} saved as {local_filename}')
     return (filename, local_filename)
 
-def _save_track(filename, local_filename):
+def _save_track(filename, local_filename):   
     # salvataggio come record
     track = Track(
         name=filename,
-        local_name=local_filename
+        local_name=local_filename,
+        user_id=current_user.id if not current_user.is_anonymous else _getAnonymous().id
     )
     db.session.add(track)
     db.session.commit()
@@ -163,6 +165,7 @@ def track_region_save(file):
         end = request.json.get('end'),
         title = request.json.get('title'),
         native_id = request.json.get('native_id'),
+        user_id=current_user.id if not current_user.is_anonymous else _getAnonymous().id,
         track_id = track.id
         )
         db.session.add(region)
@@ -182,6 +185,7 @@ def track_description_load(file):
     else:
         return 'no data', 404
 
+#TODO decide to check if only the track owner can change the description
 @app.route('/track/<file>/description', methods=['POST'])
 def track_description_save(file):
     current_app.logger.info(request.json)
@@ -196,8 +200,8 @@ def track_description_save(file):
 
 
 @app.route('/track/<file>/region/<regionid>/comment/<commentid>', methods=['GET'])
-def track_region_comment(file, regionid, commentid):
-    pass
+def track_region_comment(file, regionid, commentid): #TODO test
+    return comment(commentid)
 
 @app.route('/comment/<commentid>', methods=['GET'])
 def comment(commentid):
@@ -223,10 +227,11 @@ def track_region_comments_load(file, regionid):
 @app.route('/track/<file>/region/<regionid>/comment', methods=['POST'])
 def track_region_comment_save(file, regionid):
     track = Track.query.filter(Track.local_name == file).first()
-    region = Region.query.filter((Region.native_id == regionid) & (Region.track_id == track.id)).first()  
+    region = Region.query.filter((Region.native_id == regionid) & (Region.track_id == track.id)).first()
     comment = Comment(
         region_id = region.id,
-        text = request.json.get('text')
+        text = request.json.get('text'),
+        user_id=current_user.id if not current_user.is_anonymous else _getAnonymous().id
     ) 
     db.session.add(comment)
     db.session.commit()
