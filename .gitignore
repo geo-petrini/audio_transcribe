@@ -6,4 +6,3 @@
 /instance/*
 /uploads/*
 !/uploads/.gitkeep
-#/uploads/*
