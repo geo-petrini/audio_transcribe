@@ -16,7 +16,8 @@ from werkzeug.utils import secure_filename
 from models.conn import db
 from models.models import Track, Region, Comment, User, _getAnonymous
 
-from modules.filechecker import allowed_file_ext
+from modules.filechecker import allowed_file_ext, get_upload_folder_full_path
+import modules.converter as converter
 
 app = Blueprint('default', __name__)
 
@@ -67,7 +68,8 @@ def upload_form_post():
             file = _handle_json_track_upload(request)
         else:
             return _handle_error('No file part')        
-        (filename, local_filename) = _save_file(file)
+        (filename, local_filename, filepath) = _save_file(file)
+        _convert_track(file, local_filename)
         _save_track(filename, local_filename)
 
         if request.files:
@@ -80,14 +82,22 @@ def upload_form_post():
         current_app.logger.exception(f'Error saving file {file} as {local_filename}')
         return _handle_error('Error saving track')
 
+def _convert_track(file, local_filename):
+    upload_folder = get_upload_folder_full_path()
+    inputfile = os.path.join(upload_folder, local_filename)
+    # outputfile = os.path.join(upload_folder, local_filename+'.mp3')
+    if (file.content_type != 'audio/mpeg'):
+        convert_result = converter.convert(inputfile, f'{inputfile}.mp3')
+        current_app.logger.debug(f'conversion result: {convert_result}')    
+
 def _save_file(file):
     # Salvataggio del file sul disco
     filename = secure_filename(file.filename)
     local_filename = uuid.uuid4().hex
     filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], local_filename)
     file.save(filepath)
-    current_app.logger.info(f'file {filename} saved as {local_filename}')
-    return (filename, local_filename)
+    current_app.logger.info(f'file {filename} of type {file.content_type} as {local_filename}')
+    return (filename, local_filename, filepath)
 
 def _save_track(filename, local_filename):   
     # salvataggio come record
