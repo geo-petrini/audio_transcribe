@@ -85,10 +85,15 @@ def upload_form_post():
 def _convert_track(file, local_filename):
     upload_folder = get_upload_folder_full_path()
     inputfile = os.path.join(upload_folder, local_filename)
-    # outputfile = os.path.join(upload_folder, local_filename+'.mp3')
+    outputfile = f'{inputfile}.mp3'
     if (file.content_type != 'audio/mpeg'):
-        convert_result = converter.convert(inputfile, f'{inputfile}.mp3')
-        current_app.logger.debug(f'conversion result: {convert_result}')    
+        convert_result = converter.convert(inputfile, outputfile)
+        current_app.logger.debug(f'conversion result: {convert_result} ({type(convert_result)})')
+        if (convert_result == 0):
+            os.remove(inputfile)
+            os.rename(outputfile, inputfile)
+            current_app.logger.debug(f'renamed {outputfile} as {inputfile}')
+
 
 def _save_file(file):
     # Salvataggio del file sul disco
@@ -102,7 +107,7 @@ def _save_file(file):
 def _save_track(filename, local_filename):   
     # salvataggio come record
     track = Track(
-        name=filename,
+        name=filename.split(".")[-1],  #remove the filename extension
         local_name=local_filename,
         user_id=current_user.id if not current_user.is_anonymous else _getAnonymous().id
     )
