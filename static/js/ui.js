@@ -286,6 +286,7 @@ class RecordManager {
       scrollingWaveform: true,
       continuousWaveform: false,
       continuousWaveformDuration: 30,
+      // mimeType: 'audio/mpeg' #does not work, not all browsers support this codec for MediaRecorderOptions["mimeType"]
     });
 
     return this.recordInstance;
