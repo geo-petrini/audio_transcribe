@@ -32,7 +32,12 @@
 <div class="row">
   <div class="col">
     <!-- <div class="btn-group"> -->
-      <button id="record" class="btn btn-primary">Record</button>
+        <button id="record" class="btn btn-primary">
+          Record
+        </button>
+
+
+      
       <!-- <button id="pause" class="btn btn-primary" style="display: none;">Pause</button> -->
     <!-- </div> -->
   </div>
@@ -86,11 +91,13 @@
     const recButton = $("#record");
     const pauseButton = $("#pause");
     const progressContainer = $("#progressContainer")
+    // const recordingSpinner = $("#recording-spinner")
 
     recButton.on("click", () => {
         if (record.isRecording() || record.isPaused()) {
             record.stopRecording();
             recButton.text("Record");
+            // recordingSpinner.hide()
             pauseButton.hide();
             progressContainer.hide()
         } else {
@@ -100,8 +107,11 @@
 
             record.startRecording({ deviceId }).then(() => {
             // record.startRecording().then(() => {
-                recButton.text("Stop");
+                // recButton.text("Stop");
+                recButton.text(' Stop');
+                recButton.prepend('<div class="spinner-grow spinner-grow-sm text-danger" role="status"><span class="visually-hidden">Recording...</span></div>');
                 recButton.prop("disabled", false);
+                // recordingSpinner.show()
                 pauseButton.show();
                 
             });
