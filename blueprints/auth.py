@@ -85,7 +85,7 @@ def signup_post():
 @app.route('/profile')
 @login_required
 def profile():
-    return render_template('auth/profile.html', name=current_user.username)
+    return render_template('auth/profile.html', user=current_user)
 
 @app.route('/logout')
 @login_required

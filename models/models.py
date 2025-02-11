@@ -7,7 +7,7 @@ from flask import jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.conn import db
 from sqlalchemy import ForeignKey, inspect
-from sqlalchemy.sql import or_
+from sqlalchemy.sql import or_, and_
 
 #from app import db # commented beause of circula import
 
@@ -38,8 +38,25 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(128))  # Campo per la password criptata
 
     # Relazione many-to-many tra User e Role
-    roles = db.relationship('Role', secondary=user_roles, backref=db.backref('users', lazy='joined')) #TODO chk se lazy='dynamic' funziona
+    roles = db.relationship('Role', secondary=user_roles, backref=db.backref('user_roles', lazy='joined')) #TODO chk se lazy='dynamic' funziona
+    # tracks = db.relationship('Track', backref=db.backref('user_tracks', lazy='joined')) #TODO chk se lazy='dynamic' funziona
+    # regions = db.relationship('Region', backref=db.backref('user_regions', lazy='joined')) #TODO chk se lazy='dynamic' funziona
+    # comments = db.relationship('Comment', backref=db.backref('user_comments', lazy='joined')) #TODO chk se lazy='dynamic' funziona
 
+    # I prefer to use properties with a query instad of relationships to avoid joins on User select and useless backreferences
+    @property
+    def tracks(self):
+        return Track.query.filter(Track.user_id == self.id).all()
+    
+    @property
+    def regions(self):
+        return Region.query.filter(Region.user_id == self.id).all()    
+    
+    @property
+    def comments(self):
+        #query only comments to regions, not those to tracks (which are descriptions)
+        return Comment.query.filter( and_( Comment.user_id == self.id, Comment.track_id == None  )  ).all() 
+       
     def __str__(self):
         return f'{self.id}'
     
@@ -81,6 +98,18 @@ class Track(db.Model, Timestamped):
     def __repr__(self):
         return f'Track (id:{self.id}, name:"{self.name}")'
     
+    def to_json(self):
+        return json.dumps( self.to_dict() )
+    
+    def to_dict(self):
+        out = {
+            'id':self.id,
+            'name':self.name,
+            'local_name':self.local_name,
+            'user':self.user.to_dict()
+        }
+        return out
+    
         
 class Region(db.Model, Timestamped):
     id = db.Column(db.Integer, primary_key=True)
@@ -94,6 +123,10 @@ class Region(db.Model, Timestamped):
     user = db.relationship('User', backref=db.backref('region_user', lazy='joined'))   
     comments = db.relationship('Comment', backref=db.backref('region_comments', lazy='joined'))   #TODO chk se lazy='joined' funziona
     
+    @property
+    def track(self):
+        return Track.query.filter(Track.id == self.track_id).first()  
+    
     def to_json(self):
         return json.dumps( self.to_dict() )
     
@@ -104,7 +137,8 @@ class Region(db.Model, Timestamped):
             'title' : self.title,
             'start' : self.start,
             'end' : self.end,
-            'ts': self.ts_add
+            'ts': self.ts_add,
+            'track':self.track.to_dict()
         }
         return out        
         
@@ -118,6 +152,14 @@ class Comment(db.Model, Timestamped):
     
     user = db.relationship('User', backref=db.backref('user_comments', lazy='joined'))   
     
+    @property
+    def track(self):
+        return Track.query.filter(Track.id == self.track_id).first()  
+    
+    @property
+    def region(self):
+        return Region.query.filter(Region.id == self.region_id).first()      
+        
     def to_json(self):
         return json.dumps( self.to_dict() )
     
@@ -128,7 +170,9 @@ class Comment(db.Model, Timestamped):
             'track_id' : self.track_id,
             'region_id' : self.region_id,
             'ts': self.ts_add,
-            'user': self.user.to_dict()
+            'user': self.user.to_dict(),
+            'track': self.track.to_dict() if self.track else None,  #for descriptions
+            'region': self.region.to_dict() if self.region else None,  #for descriptions
         }
         return out     
 

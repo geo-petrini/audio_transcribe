@@ -239,3 +239,33 @@ def track_region_comment_save(file, regionid):
 
     current_app.logger.debug(f'comment saved as {comment}')
     return jsonify( comment.to_dict() ), 200
+
+@app.route('/user/<username>/tracks')
+def user_tracks_load(username):
+    data = []
+    user = User.query.filter(User.username == username).first()
+    tracks = user.tracks
+    for track in tracks:
+        data.append( track.to_dict() )
+    
+    return jsonify( data )
+
+@app.route('/user/<username>/regions')
+def user_regions_load(username):
+    data = []
+    user = User.query.filter(User.username == username).first()
+    regions = user.regions
+    for region in regions:
+        data.append( region.to_dict() )
+        
+    return jsonify( data )
+
+@app.route('/user/<username>/comments')
+def user_comments_load(username):
+    data = []
+    user = User.query.filter(User.username == username).first()
+    comments = user.comments
+    for comment in comments:
+        data.append( comment.to_dict() )
+        
+    return jsonify( data )
