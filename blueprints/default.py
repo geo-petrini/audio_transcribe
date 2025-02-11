@@ -107,7 +107,7 @@ def _save_file(file):
 def _save_track(filename, local_filename):   
     # salvataggio come record
     track = Track(
-        name=filename.split(".")[-1],  #remove the filename extension
+        name=filename.split(".")[0],  #save the filename without extension
         local_name=local_filename,
         user_id=current_user.id if not current_user.is_anonymous else _getAnonymous().id
     )
