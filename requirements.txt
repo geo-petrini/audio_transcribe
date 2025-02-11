@@ -4,3 +4,4 @@ flask-login
 flask-migrate
 python-dotenv
 ffmpeg-binaries
+ffmpeg-asyncio
