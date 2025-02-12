@@ -40,16 +40,18 @@
       </div>
     </nav>
 
-    <div class="toast-container position-static">
+    <div class="toast-container top-2 end-0">
      
       {% with messages = get_flashed_messages() %}
         {% if messages %}
           {% for message in messages %}
-          <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-            <div class="toast-body">
-              {{ message }}
+          <div class="toast text-bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+              <div class="toast-body">
+                {{ message }}
+              </div>
+              <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
-            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
           </div>
           {% endfor %} 
         {% endif %}
@@ -61,11 +63,20 @@
         {% block content %}{% endblock %}     
     </div>
   <script>
-    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
-    const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))      
+    $(document).ready(function () {
+      initTooltips()
+      initToasts()
+    });    
 
-    const toastElList = document.querySelectorAll('.toast')
-    const toastList = [...toastElList].map(toastEl => new bootstrap.Toast(toastEl, option))    
+    function initTooltips(){
+      const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+      const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))      
+    }
+
+    function initToasts(){
+      const toastElList = document.querySelectorAll('.toast')
+      const toastList = [...toastElList].map(toastEl => new bootstrap.Toast(toastEl))    
+    }
   </script>
 </body>
 </html>
