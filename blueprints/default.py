@@ -120,6 +120,7 @@ def _convert_track(file, local_filename):
             current_app.logger.debug(f'renamed {outputfile} as {inputfile}')
 
 def _delete_track_file(local_filename):
+    #TODO move to a more suitable location
     upload_folder = get_upload_folder_full_path()
     track_path = os.path.join(upload_folder, local_filename)    
     return os.remove(track_path)
