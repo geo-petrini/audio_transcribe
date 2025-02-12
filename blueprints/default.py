@@ -12,6 +12,7 @@ from flask import current_app
 from flask import send_from_directory
 from flask import jsonify
 from flask_login import current_user
+from flask_login import login_required
 from werkzeug.utils import secure_filename
 from models.conn import db
 from models.models import Track, Region, Comment, User, _getAnonymous
@@ -48,6 +49,24 @@ def play(file):
     track = Track.query.filter(Track.local_name == file).first()
     return render_template('play.html', track=track)
 
+@app.route('/track/<file>', methods=['DELETE'])
+@app.route('/track/<file>/delete')
+@login_required
+def delete_track(file):
+    current_app.logger.debug(f'request: {request}')
+    track = Track.query.filter(Track.local_name == file).first()
+    if (track):
+        try:
+            db.session.delete(track)
+            db.session.commit()
+
+        except Exception as e:
+            current_app.logger.exception(f'Error deleting track {file}')
+            return _handle_error('Error deleting track')
+    if request.referrer:
+        return redirect(request.referrer)
+    return redirect( url_for('default.home') )
+            
 @app.route('/track/<path:filename>')
 def track(filename):
     return send_from_directory(current_app.config['UPLOAD_FOLDER'], filename)
