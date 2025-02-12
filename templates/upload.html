@@ -31,15 +31,10 @@
 </select>
 <div class="row">
   <div class="col">
-    <!-- <div class="btn-group"> -->
         <button id="record" class="btn btn-primary">
           Record
         </button>
-
-
-      
       <!-- <button id="pause" class="btn btn-primary" style="display: none;">Pause</button> -->
-    <!-- </div> -->
   </div>
   <div class="col-2">
     <div class="input-group" id="progressContainer" style="display: none;">
@@ -150,11 +145,4 @@
   }    
 </script>
 
-{% with messages = get_flashed_messages() %}
-{% if messages %}
-    <div class="alert alert-danger" role="alert">
-        {{ messages[0] }}
-    </div>
-{% endif %}
-{% endwith %}
 {% endblock %}
