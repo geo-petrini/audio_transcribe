@@ -56,13 +56,19 @@ def delete_track(file):
     current_app.logger.debug(f'request: {request}')
     track = Track.query.filter(Track.local_name == file).first()
     if (track):
-        try:
-            db.session.delete(track)
-            db.session.commit()
-
-        except Exception as e:
-            current_app.logger.exception(f'Error deleting track {file}')
-            return _handle_error('Error deleting track')
+        if (current_user.id == track.user_id):
+            try:                
+                db.session.delete(track)
+                _delete_track_file(track.local_name)
+                db.session.commit()
+                current_app.logger.info(f'track: {track} deleted')
+            except Exception as e:
+                flash('Error deleting track')
+                current_app.logger.exception(f'Error deleting track {file}')
+                return 'Error deleting track', 500
+        else:
+            flash('User is not owner of this track')
+            return 'User is not owner of this track', 401
     if request.referrer:
         return redirect(request.referrer)
     return redirect( url_for('default.home') )
@@ -87,9 +93,9 @@ def upload_form_post():
             file = _handle_json_track_upload(request)
         else:
             return _handle_error('No file part')        
-        (filename, local_filename, filepath) = _save_file(file)
+        (filename, local_filename, filepath) = _save_track_file(file)
         _convert_track(file, local_filename)
-        _save_track(filename, local_filename)
+        _save_track_record(filename, local_filename)
 
         if request.files:
             return redirect(url_for('default.play', file=local_filename))
@@ -113,8 +119,12 @@ def _convert_track(file, local_filename):
             os.rename(outputfile, inputfile)
             current_app.logger.debug(f'renamed {outputfile} as {inputfile}')
 
+def _delete_track_file(local_filename):
+    upload_folder = get_upload_folder_full_path()
+    track_path = os.path.join(upload_folder, local_filename)    
+    return os.remove(track_path)
 
-def _save_file(file):
+def _save_track_file(file):
     # Salvataggio del file sul disco
     filename = secure_filename(file.filename)
     local_filename = uuid.uuid4().hex
@@ -123,7 +133,7 @@ def _save_file(file):
     current_app.logger.info(f'file {filename} of type {file.content_type} as {local_filename}')
     return (filename, local_filename, filepath)
 
-def _save_track(filename, local_filename):   
+def _save_track_record(filename, local_filename):   
     # salvataggio come record
     track = Track(
         name=filename.split(".")[0],  #save the filename without extension
