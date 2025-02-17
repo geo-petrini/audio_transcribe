@@ -27,9 +27,14 @@
     <button id="add-section-button" class="btn btn-primary float-end" href="#">
       New Region <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 18l-4.2 1.8q-1 .425-1.9-.162T5 17.975V5q0-.825.588-1.412T7 3h5q.425 0 .713.288T13 4t-.288.713T12 5H7v12.95l5-2.15l5 2.15V12q0-.425.288-.712T18 11t.713.288T19 12v5.975q0 1.075-.9 1.663t-1.9.162zm0-13H7h6zm5 2h-1q-.425 0-.712-.288T15 6t.288-.712T16 5h1V4q0-.425.288-.712T18 3t.713.288T19 4v1h1q.425 0 .713.288T21 6t-.288.713T20 7h-1v1q0 .425-.288.713T18 9t-.712-.288T17 8z"/></svg></span>
     </button>      
+    <button id="transcribe-button" class="btn btn-primary float-end" href="#">
+      Transcribe <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M4 5h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h10v2H4z"/></svg></span>
+    </button>
   </div>
 
 </div>
+
+
 
 <div class="row mt-4">
   <div class="col">
@@ -45,13 +50,31 @@
 </div>
 <div class="row m-2">
 </div>
+
 <div class="row">
   <div class="col">
-    <div id="regions-container" class="accordion">
-     
+    <div id="regions-container" class="accordion"></div>
+  </div>
+</div>
+
+<div class="modal" tabindex="-1" id="transcription-modal">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Transcription</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="transcription-container"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <!-- <button type="button" class="btn btn-primary">Save changes</button> -->
+      </div>
     </div>
   </div>
 </div>
+
 
 <script>
   $(document).ready(function () {
@@ -87,7 +110,52 @@
     waveSurfer.on("ready", () => {
       console.log("WaveSurfer is ready");
     });
+
+    tm = new TranscriptionManager({output:'#transcription-container', modal:'#transcription-modal'})
+    tm.bindTo('#transcribe-button')
   }  
+
+  class TranscriptionManager{
+    constructor(config) {
+      self.output=config.output
+      self.modal=config.modal
+    }    
+
+    bindTo(selector){
+      $(selector).on('click', null, {}, this.handleTranscriptionEvent.bind(this));
+    }
+
+    transcribe(){
+      this.doAjaxTranscribe().then( (response) => {
+        //TODO display modal
+      });  
+    }  
+
+    async doAjaxTranscribe(){
+      let payload = {
+        language: null,
+      };    
+      let response;  
+      try{
+        response = await $.ajax({
+          url: UrlManager.getFileUrl().concat("/transcribe"),
+          type: "GET",
+          data: JSON.stringify(payload),
+          contentType: "application/json; charset=utf-8",
+          dataType: "json",
+        });
+        return response;
+      } catch (error) {
+        console.error(error)
+      }
+    }      
+
+    handleTranscriptionEvent(event){
+      this.transcribe()
+    }
+
+
+  }
 </script>
 
 {% endblock %}
