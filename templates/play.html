@@ -26,13 +26,23 @@
     <div id="waveform"></div>
     <button id="add-section-button" class="btn btn-primary float-end" href="#">
       New Region <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 18l-4.2 1.8q-1 .425-1.9-.162T5 17.975V5q0-.825.588-1.412T7 3h5q.425 0 .713.288T13 4t-.288.713T12 5H7v12.95l5-2.15l5 2.15V12q0-.425.288-.712T18 11t.713.288T19 12v5.975q0 1.075-.9 1.663t-1.9.162zm0-13H7h6zm5 2h-1q-.425 0-.712-.288T15 6t.288-.712T16 5h1V4q0-.425.288-.712T18 3t.713.288T19 4v1h1q.425 0 .713.288T21 6t-.288.713T20 7h-1v1q0 .425-.288.713T18 9t-.712-.288T17 8z"/></svg></span>
-    </button>      
+    </button>   
+    <button id="transcribe-button-view" class="btn btn-primary float-end" href="#" data-bs-toggle="modal" data-bs-target="#transcription-modal" style="display: none;">
+      View Transcription
+      <span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M4 5h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h10v2H4z"/></svg>
+      </span>      
+    </button>   
     <button id="transcribe-button" class="btn btn-primary float-end" href="#">
-      Transcribe <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M4 5h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h10v2H4z"/></svg></span>
+      Transcribe 
+      <span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M4 5h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h10v2H4z"/></svg>
+      </span>
+      <div id="transcribe-button-spinner" class="spinner-border spinner-border-sm" role="status" style="display: none;"><span class="visually-hidden">Loading...</span></div>
     </button>
   </div>
-
 </div>
+<div class="row" id="transcription-line"></div>
 
 
 
@@ -111,25 +121,90 @@
       console.log("WaveSurfer is ready");
     });
 
-    tm = new TranscriptionManager({output:'#transcription-container', modal:'#transcription-modal'})
+    tm = new TranscriptionManager()
     tm.bindTo('#transcribe-button')
+
+    tm.on('transcription-end', (data) => handleTranscriptionEnd(data))
+    tm.on('transcription-start', (data) => handleTranscriptionStart(data))
+    
   }  
 
+  function handleTranscriptionStart(data){
+    console.debug(data)
+    $('#transcribe-button-spinner').show()
+    $(`#transcribe-button`).attr("disabled", true);
+  }
+  function handleTranscriptionEnd(data){
+    $('#transcribe-button-spinner').hide()
+    $(`#transcribe-button`).attr("disabled", false);
+    if (data && 'segments' in data) { 
+      rendered = renderTranscription(data) 
+      $('#transcription-container').append( rendered )
+    } else {
+      $('#transcription-container').append( 'error' )
+    }
+    $('#transcribe-button-view').show()
+    $('#transcribe-button').hide()
+  }
+
+  function renderTranscription(data){
+    const lang = `<p>Language: ${data.language}</p>`
+    // const segments_container = `<p class="text-pre">${data.text}</p>`
+    let segments_container = '<p>'
+    for(let i = 0; i< data.segments.length; i++){ //old style loop.. but I like it
+      segments_container = segments_container.concat( `<br>${data.segments[i].text}` )
+    }
+    segments_container = segments_container.concat('</p>')
+
+    return `${lang}${segments_container}`
+  }
+
   class TranscriptionManager{
-    constructor(config) {
-      self.output=config.output
-      self.modal=config.modal
+    constructor() {
+      this.eventMap = new Map();
     }    
+
+    on(event, callback) {
+        if (!this.eventMap.has(event)) {
+            this.eventMap.set(event, []);
+        }
+        this.eventMap.get(event).push(callback);
+    }
+
+    off(event, callback) {
+        if (this.eventMap.has(event)) {
+            const callbacks = this.eventMap.get(event).filter(cb => cb !== callback);
+            this.eventMap.set(event, callbacks);
+        }
+    }
+
+    emit(event, ...data) {
+        if (this.eventMap.has(event)) {
+            this.eventMap.get(event).forEach(callback => {
+                callback(...data); // don't know if necessary
+                // setTimeout(() => callback(...data), 0); // don't know if necessary
+            });
+        }
+    }    
+
 
     bindTo(selector){
       $(selector).on('click', null, {}, this.handleTranscriptionEvent.bind(this));
     }
 
     transcribe(){
+      // const transcription_start_event = new Event('transcription-start')
+      // self.dispatchEvent(transcription_start_event)
+
+      this.emit('transcription-start')
+
       this.doAjaxTranscribe().then( (response) => {
         //TODO display modal
+        // const transcription_end_event = new Event('transcription-end', {response})
+        // self.dispatchEvent(transcription_end_event)
+        this.emit('transcription-end', response)
       });  
-    }  
+    }
 
     async doAjaxTranscribe(){
       let payload = {

@@ -9,8 +9,6 @@ def getModel():
     return current_app.config['stt_model']
         
         
-def transcribe(inputfilename, outputfilename):
+def transcribe(inputfilename):
     result = getModel().transcribe(inputfilename)
-    with open(outputfilename, 'w') as file:
-        file.write( result['text'])
     return result

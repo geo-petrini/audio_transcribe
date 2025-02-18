@@ -56,7 +56,7 @@ def transcribe(file):
     track = Track.query.filter(Track.local_name == file).first()
     upload_folder = get_upload_folder_full_path()
     track_path = os.path.join(upload_folder, track.local_name)   
-    result = stt.transcribe(track_path, track_path+'txt')
+    result = stt.transcribe(track_path)
     return jsonify(result)
 
 @app.route('/track/<file>', methods=['DELETE'])
