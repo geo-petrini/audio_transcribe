@@ -109,10 +109,21 @@
 
     descriptionManager.loadDescription()
 
+    tm = new TranscriptionManager()
+    tm.bindTo('#transcribe-button')
+
+    tm.on('transcription-end', (data) => handleTranscriptionEnd(data))
+    tm.on('transcription-start', (data) => handleTranscriptionStart(data))    
+
     waveSurfer.on("ready", () => {
       regionsManager.loadRegions();
       $("#waveform-spinner").hide();
     });  
+
+    waveSurfer.on('timeupdate', (currentTime) => {
+      let text = tm.getTextAt(currentTime)
+      $('#transcription-line').text( text )
+    })
     
 
     UIManager.bindButtonEvents(regionsManager);
@@ -121,11 +132,7 @@
       console.log("WaveSurfer is ready");
     });
 
-    tm = new TranscriptionManager()
-    tm.bindTo('#transcribe-button')
 
-    tm.on('transcription-end', (data) => handleTranscriptionEnd(data))
-    tm.on('transcription-start', (data) => handleTranscriptionStart(data))
     
   }  
 
@@ -162,6 +169,7 @@
   class TranscriptionManager{
     constructor() {
       this.eventMap = new Map();
+      this.transcription = {}
     }    
 
     on(event, callback) {
@@ -181,8 +189,8 @@
     emit(event, ...data) {
         if (this.eventMap.has(event)) {
             this.eventMap.get(event).forEach(callback => {
-                callback(...data); // don't know if necessary
-                // setTimeout(() => callback(...data), 0); // don't know if necessary
+                callback(...data);
+                // setTimeout(() => callback(...data), 0); // not really necessary
             });
         }
     }    
@@ -193,15 +201,9 @@
     }
 
     transcribe(){
-      // const transcription_start_event = new Event('transcription-start')
-      // self.dispatchEvent(transcription_start_event)
-
       this.emit('transcription-start')
-
       this.doAjaxTranscribe().then( (response) => {
-        //TODO display modal
-        // const transcription_end_event = new Event('transcription-end', {response})
-        // self.dispatchEvent(transcription_end_event)
+        this.transcription = response
         this.emit('transcription-end', response)
       });  
     }
@@ -227,6 +229,18 @@
 
     handleTranscriptionEvent(event){
       this.transcribe()
+    }
+
+    getTextAt(timestamp){
+      if (this.transcription && 'segments' in this.transcription){
+        for(let i = 0; i< this.transcription.segments.length; i++){ 
+          let segment = this.transcription.segments[i]
+          if (segment.start >= timestamp && segment.end <= timestamp){
+            return segment.text
+          }
+        }
+      }      
+      return ''
     }
 
 
