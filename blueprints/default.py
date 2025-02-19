@@ -15,7 +15,7 @@ from flask_login import current_user
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 from models.conn import db
-from models.models import Track, Region, Comment, User, _getAnonymous
+from models.models import Track, Region, Comment, User, Transcription,TranscriptionSegment, _getAnonymous
 
 from modules.filechecker import allowed_file_ext, get_upload_folder_full_path
 import modules.converter as converter
@@ -23,6 +23,7 @@ import modules.stt as stt
 
 app = Blueprint('default', __name__)
 
+#TODO reorganize methods, there is way too much stuff in here
 
 @app.route('/')
 def home():
@@ -52,12 +53,50 @@ def play(file):
 
 @app.route('/track/<file>/transcribe')
 def transcribe(file):
-    # TODO check return as track is not used in the template anymore
     track = Track.query.filter(Track.local_name == file).first()
     upload_folder = get_upload_folder_full_path()
     track_path = os.path.join(upload_folder, track.local_name)   
     result = stt.transcribe(track_path)
     return jsonify(result)
+
+@app.route('/track/<file>/transcription')
+def track_transcription_load(file):
+    track = Track.query.filter(Track.local_name == file).first()
+    transcription = Transcription.query.filter(Transcription.track_id == track.id).first()
+    return jsonify(transcription.to_dict())
+
+@app.route('/track/<file>/transcription', methods=['POST'])
+def track_transcription_save(file):
+    track = Track.query.filter(Track.local_name == file).first()
+    
+    try:
+        transcription = Transcription(
+            text = request.json.get('text'),
+            language = request.json.get('language'),
+            track_id = track.id,
+            user_id=current_user.id if not current_user.is_anonymous else _getAnonymous().id
+        )
+        db.session.add(transcription)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.exception(f'error saving transcription {request.json}')
+        return _handle_error('error saving transcription')
+    
+    try:
+        for segment in request.json.get('segments'):
+            t_segment = TranscriptionSegment(
+                text = segment['text'],
+                start = segment['start'],
+                end = segment['end'],
+                transcription_id = transcription.id
+            )
+            db.session.add(t_segment)
+            db.session.commit()    
+    except Exception as e:
+        current_app.logger.exception(f'error saving transcription segments {request.json.get('segments')}')
+        return _handle_error('error saving transcription segments')
+    
+    return jsonify(transcription.to_dict()), 200
 
 @app.route('/track/<file>', methods=['DELETE'])
 @app.route('/track/<file>/delete')

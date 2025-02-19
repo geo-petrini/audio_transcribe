@@ -95,6 +95,7 @@ class Track(db.Model, Timestamped):
 
     def __str__(self):
         return f'Track (id:{self.id}, name:"{self.name}")'
+    
     def __repr__(self):
         return f'Track (id:{self.id}, name:"{self.name}")'
     
@@ -179,7 +180,60 @@ class Comment(db.Model, Timestamped):
     def __repr__(self):
         return f'Comment: {self.to_dict()}'
             
-
+class Transcription(db.Model, Timestamped):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(1000) )
+    language = db.Column(db.String(2) )
+    track_id = db.Column(db.String(16), ForeignKey('track.id'))
+    user_id = db.Column(db.Integer() , ForeignKey('user.id'))
+    
+    user = db.relationship('User', backref=db.backref('user_transcriptions', lazy='joined'))  
+    # segments = db.relationship('TranscriptionSegment', backref=db.backref('transcription_segments', lazy='joined'))
+    
+    @property
+    def segments(self):
+        return TranscriptionSegment.query.filter(  TranscriptionSegment.transcription_id == self.id ).all()     
+    
+    @property
+    def track(self):
+        return Track.query.filter(Track.id == self.track_id).first()  
+    
+    def to_json(self):
+        return json.dumps( self.to_dict() )
+    
+    def to_dict(self):
+        out = {
+            'id' : self.id,
+            'text' : self.text,
+            'language' : self.language,
+            'track_id' : self.track_id,
+            'user_id' : self.user_id,
+            'ts': self.ts_add,
+            'segments': self.segments,
+        }
+        return out   
+    
+class TranscriptionSegment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.String(1000) )
+    start = db.Column(db.Float())
+    end = db.Column(db.Float())
+    transcription_id = db.Column(db.Integer() , ForeignKey('transcription.id'))
+    
+    def to_json(self):
+        return json.dumps( self.to_dict() )
+    
+    def to_dict(self):
+        out = {
+            'id' : self.id,
+            'transcription_id' : self.transcription_id,
+            'text' : self.text,
+            'start' : self.start,
+            'end': self.end
+        }
+        return out      
+    
+    
 def _getAnonymous():
     return User.query.filter_by(username='anonymous').first()
     

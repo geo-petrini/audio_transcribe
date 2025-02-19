@@ -985,6 +985,48 @@ class TranscriptionManager{
     this.transcribe()
   }
 
+  async doAjaxSaveTranscription(transcription){
+    let payload = transcription   
+    let response;  
+    try{
+      response = await $.ajax({
+        url: UrlManager.getFileUrl().concat("/transcription"),
+        type: "POST",
+        data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+      });
+      return response;
+    } catch (error) {
+      console.error(error)
+    }         
+  }
+
+  saveTranscription(){
+    this.doAjaxSaveTranscription(this.transcription).then( (response) => {
+      //TODO return something
+      console.debug(`response: ${response}`)
+    }); 
+  }
+
+  async doAjaxLoadTranscription(){
+    let data;
+    try{
+      data = await $.ajax({
+        url: UrlManager.getFileUrl().concat("/transcription"),
+        type: "GET",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json"
+      });
+      return data;
+    } catch (error) {
+      console.error(error)
+    }
+  }
+  loadTranscription(){
+    //TODO implement
+  }
+
   getTextAt(timestamp){
     if (this.transcription && 'segments' in this.transcription){
       for(let i = 0; i< this.transcription.segments.length; i++){ 
