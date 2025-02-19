@@ -3,7 +3,7 @@ from flask import current_app
 
 def init_model():
     current_app.logger.info('loading speech to text model')
-    current_app.config['stt_model'] = whisper.load_model("base")
+    current_app.config['stt_model'] = whisper.load_model("small")
     current_app.logger.info('model loaded')    
 
 
