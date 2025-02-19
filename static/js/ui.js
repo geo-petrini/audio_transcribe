@@ -1043,7 +1043,7 @@ class TranscriptionManager{
     if (this.transcription && 'segments' in this.transcription){
       for(let i = 0; i< this.transcription.segments.length; i++){ 
         let segment = this.transcription.segments[i]
-        if (segment.start >= timestamp && timestamp <= segment.end ){
+        if (segment.start <= timestamp && timestamp <= segment.end ){
           return segment.text
         }
       }
@@ -1055,7 +1055,7 @@ class TranscriptionManager{
     if (this.transcription && 'segments' in this.transcription){
       for(let i = 0; i< this.transcription.segments.length; i++){ 
         let segment = this.transcription.segments[i]
-        if (segment.start >= timestamp && timestamp <= segment.end ){
+        if (segment.start <= timestamp && timestamp <= segment.end ){
           return segment
         }
       }
