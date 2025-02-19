@@ -184,7 +184,7 @@
       let segment = data.segments[i]
       let segment_ts = `<span class="text-secondary user-select-none">${secondsToTimestamp(segment.start)} - ${secondsToTimestamp(segment.end)}</span>`
       let segment_text = `<span id="segment-${i}" contentEditable = "true">${segment.text}</span>`
-      segments_container = segments_container.concat(segment_ts, segment_text, '</br>')
+      segments_container = segments_container.concat(segment_ts, ' ', segment_text, '</br>')
     }
     segments_container = segments_container.concat('</div>')
 
