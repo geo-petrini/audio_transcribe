@@ -24,12 +24,33 @@
 <div class="row sticky-top bg-dark pt-1 pb-1">
   <div class="col">
     <div id="waveform"></div>
+  </div>
+</div>
+<div class="row" >
+  <div class="col">
+    <div id="transcription-line"></div>
+  </div>
+  <div class="col-4">
     <button id="add-section-button" class="btn btn-primary float-end" href="#">
       New Region <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m12 18l-4.2 1.8q-1 .425-1.9-.162T5 17.975V5q0-.825.588-1.412T7 3h5q.425 0 .713.288T13 4t-.288.713T12 5H7v12.95l5-2.15l5 2.15V12q0-.425.288-.712T18 11t.713.288T19 12v5.975q0 1.075-.9 1.663t-1.9.162zm0-13H7h6zm5 2h-1q-.425 0-.712-.288T15 6t.288-.712T16 5h1V4q0-.425.288-.712T18 3t.713.288T19 4v1h1q.425 0 .713.288T21 6t-.288.713T20 7h-1v1q0 .425-.288.713T18 9t-.712-.288T17 8z"/></svg></span>
-    </button>      
+    </button>   
+    <button id="transcribe-button-view" class="btn btn-primary float-end" href="#" data-bs-toggle="modal" data-bs-target="#transcription-modal" style="display: none;">
+      View Transcription
+      <span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M4 5h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h10v2H4z"/></svg>
+      </span>      
+    </button>   
+    <button id="transcribe-button" class="btn btn-primary float-end" href="#">
+      Transcribe 
+      <span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M4 5h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h10v2H4z"/></svg>
+      </span>
+      <div id="transcribe-button-spinner" class="spinner-border spinner-border-sm" role="status" style="display: none;"><span class="visually-hidden">Loading...</span></div>
+    </button>    
   </div>
-
 </div>
+
+
 
 <div class="row mt-4">
   <div class="col">
@@ -45,13 +66,31 @@
 </div>
 <div class="row m-2">
 </div>
+
 <div class="row">
   <div class="col">
-    <div id="regions-container" class="accordion">
-     
+    <div id="regions-container" class="accordion"></div>
+  </div>
+</div>
+
+<div class="modal" tabindex="-1" id="transcription-modal">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Transcription <span id="transcription-title-append" class="text-secondary fs-6 text"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p id="transcription-container"></p>
+      </div>
+      <div class="modal-footer">
+        <button id="transcription-save-button" type="button" class="btn btn-primary">Save</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
     </div>
   </div>
 </div>
+
 
 <script>
   $(document).ready(function () {
@@ -76,10 +115,26 @@
 
     descriptionManager.loadDescription()
 
+    const tm = new TranscriptionManager()
+    // tm.bindTo('#transcribe-button')
+    tm.on('transcription-loaded', (data) => handleTranscriptionLoaded(data))
+    tm.on('transcription-end', (data) => handleTranscriptionEnd(data))
+    tm.on('transcription-start', (data) => handleTranscriptionStart(data))   
+    
+    $('#transcribe-button').on('click', () => tm.transcribe())
+    $('#transcription-save-button').on('click', () => handleTranscriptionSave(tm))
+    
+    tm.loadTranscription()
+
     waveSurfer.on("ready", () => {
       regionsManager.loadRegions();
       $("#waveform-spinner").hide();
     });  
+
+    waveSurfer.on('timeupdate', (currentTime) => {
+      let segment = tm.getSegmentAt(currentTime)
+      renderTranscriptionLine(segment)
+    })
     
 
     UIManager.bindButtonEvents(regionsManager);
@@ -87,7 +142,65 @@
     waveSurfer.on("ready", () => {
       console.log("WaveSurfer is ready");
     });
+
   }  
+
+  function handleTranscriptionStart(data){
+    console.debug(data)
+    $('#transcribe-button-spinner').show()
+    $(`#transcribe-button`).attr("disabled", true);
+  }
+  function handleTranscriptionEnd(data){
+    $('#transcribe-button-spinner').hide()
+    $(`#transcribe-button`).attr("disabled", false);
+    if (data && 'segments' in data) { 
+      $('#transcription-title-append').text( `(Language: ${data.language})`)
+      $('#transcription-container').append( renderTranscription(data) )
+    } else {
+      $('#transcription-container').append( 'error' )
+    }
+    $('#transcribe-button-view').show()
+    $('#transcribe-button').hide()
+  }
+
+  function handleTranscriptionLoaded(data){
+    handleTranscriptionEnd(data)
+  }
+
+  function handleTranscriptionSave(tm){
+    for(let i = 0; i< tm.transcription.segments.length; i++){
+      let segment = tm.transcription.segments[i]
+      let visible_text = $(`#segment-${i}`).text()
+      if (segment.text != visible_text){
+        segment.text = visible_text
+      }
+    }
+    tm.saveTranscription()
+  }
+
+  function renderTranscription(data){
+    let segments_container = '<div>'
+    for(let i = 0; i< data.segments.length; i++){ //old style loop.. but I like it
+      let segment = data.segments[i]
+      let segment_ts = `<span class="text-secondary user-select-none">${secondsToTimestamp(segment.start)} - ${secondsToTimestamp(segment.end)}</span>`
+      let segment_text = `<span id="segment-${i}" contentEditable = "true">${segment.text}</span>`
+      segments_container = segments_container.concat(segment_ts, ' ', segment_text, '</br>')
+    }
+    segments_container = segments_container.concat('</div>')
+
+    return segments_container
+  }
+
+  function renderTranscriptionLine(segment){
+    if (segment && 'end' in segment && 'start' in segment && 'text' in segment){  //TODO refactor if
+      $('#transcription-line').html( `
+          <span class="text-secondary">${secondsToTimestamp(segment.start)} - ${secondsToTimestamp(segment.end)}</span>
+          <span>${segment.text}</span>
+        ` )
+      }
+  }
+
+  
 </script>
 
 {% endblock %}

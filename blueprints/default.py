@@ -15,13 +15,15 @@ from flask_login import current_user
 from flask_login import login_required
 from werkzeug.utils import secure_filename
 from models.conn import db
-from models.models import Track, Region, Comment, User, _getAnonymous
+from models.models import Track, Region, Comment, User, Transcription,TranscriptionSegment, _getAnonymous
 
 from modules.filechecker import allowed_file_ext, get_upload_folder_full_path
 import modules.converter as converter
+import modules.stt as stt
 
 app = Blueprint('default', __name__)
 
+#TODO reorganize methods, there is way too much stuff in here
 
 @app.route('/')
 def home():
@@ -48,6 +50,94 @@ def play(file):
     # TODO check return as track is not used in the template anymore
     track = Track.query.filter(Track.local_name == file).first()
     return render_template('play.html', track=track)
+
+@app.route('/track/<file>/transcribe')
+def transcribe(file):
+    track = Track.query.filter(Track.local_name == file).first()
+    upload_folder = get_upload_folder_full_path()
+    track_path = os.path.join(upload_folder, track.local_name)   
+    result = stt.transcribe(track_path)
+    return jsonify(result)
+
+@app.route('/track/<file>/transcription', methods=['GET'])
+def track_transcription_load(file):
+    track = Track.query.filter(Track.local_name == file).first()
+    transcription = Transcription.query.filter(Transcription.track_id == track.id).first()
+    if (transcription):
+        return jsonify(transcription.to_dict())
+    else:
+        return jsonify(f'no transcription for track {file}'), 404
+
+@app.route('/track/<file>/transcription', methods=['POST'])
+def track_transcription_save(file):
+    track = Track.query.filter(Track.local_name == file).first()
+    transcription = Transcription.query.filter(Transcription.track_id == track.id).first()
+
+    if (transcription):
+        try:
+            current_app.logger.debug(f'transcription for track {track.local_name} already exists, updating')
+            data = {
+                'language' : request.json.get('language'),
+            }            
+            _update_transcription(transcription, data)
+            _update_transcription_segments(transcription, request.json.get('segments'))
+        except Exception as e:
+            current_app.logger.exception(f'error updating transcription {request.json}')
+            return jsonify('error updating transcription'), 500
+    
+    else:
+        try:
+            data = {
+                'language' : request.json.get('language'),
+                'track_id' : track.id,
+                'user_id':current_user.id if not current_user.is_anonymous else _getAnonymous().id
+            }
+            transcription = _save_transcription(data)
+        except Exception as e:
+            current_app.logger.exception(f'error saving transcription {request.json}')
+            return jsonify('error saving transcription'), 500
+    
+        try:
+            _save_transcription_segments(transcription, request.json.get('segments'))
+        except Exception as e:
+            current_app.logger.exception(f'error saving transcription segments {request.json.get('segments')}')
+            return jsonify('error saving transcription segments'), 500
+    
+    return jsonify(transcription.to_dict()), 200
+
+def _save_transcription(data):
+    transcription = Transcription(**data)
+    db.session.add(transcription)
+    db.session.commit()
+    return transcription
+
+def _update_transcription(transcription, data):
+    transcription.language = data['language']
+    db.session.commit()
+
+def _save_transcription_segments(transcription, segments):
+    out = []
+    for segment in segments:
+        t_segment = TranscriptionSegment(
+            text = segment['text'],
+            start = segment['start'],
+            end = segment['end'],
+            transcription_id = transcription.id
+        )
+        db.session.add(t_segment)
+        db.session.commit()
+        out.append(t_segment)
+    return out
+
+def _update_transcription_segments(transcription, segments):
+    # TODO find a better way to update the segments instead of erasing everything and re-save them all
+    _delete_transcription_segments(transcription)
+    return _save_transcription_segments(transcription, segments)
+
+def _delete_transcription_segments(transcription):
+    segments = TranscriptionSegment.query.filter(TranscriptionSegment.transcription_id == transcription.id).all()
+    for segment in segments:
+        db.session.delete(segment)
 
 @app.route('/track/<file>', methods=['DELETE'])
 @app.route('/track/<file>/delete')

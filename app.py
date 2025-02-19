@@ -18,6 +18,8 @@ from blueprints.auth import app as auth_app
 from models.conn import db
 from models.models import User, init_db
 
+from modules import stt
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'TERCES')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///flask_hello.db')
@@ -58,4 +60,5 @@ if __name__ == '__main__':
     with app.app_context():
         change_logger()
         init_db()
+        stt.init_model()
     app.run(debug=True, host='0.0.0.0')
