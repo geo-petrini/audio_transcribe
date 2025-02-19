@@ -1032,6 +1032,7 @@ class TranscriptionManager{
   loadTranscription(){
     this.doAjaxLoadTranscription().then( (response) => {
       console.debug(`response: ${response}`)
+      this.transcription = response
       this.emit('transcription-loaded', response)
     }).catch( (reason) => {
       // in this case do not emit the 'transcription-loaded' event
