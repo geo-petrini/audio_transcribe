@@ -77,7 +77,7 @@
   <div class="modal-dialog modal-xl modal-dialog-scrollable">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Transcription</h5>
+        <h5 class="modal-title">Transcription <span id="transcription-title-append" class="text-secondary fs-6 text"></span></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -115,14 +115,14 @@
 
     descriptionManager.loadDescription()
 
-    tm = new TranscriptionManager()
+    const tm = new TranscriptionManager()
     // tm.bindTo('#transcribe-button')
     tm.on('transcription-loaded', (data) => handleTranscriptionLoaded(data))
     tm.on('transcription-end', (data) => handleTranscriptionEnd(data))
     tm.on('transcription-start', (data) => handleTranscriptionStart(data))   
     
     $('#transcribe-button').on('click', () => tm.transcribe())
-    $('#transcription-save-button').on('click', () => tm.saveTranscription())
+    $('#transcription-save-button').on('click', () => handleTranscriptionSave(tm))
     
     tm.loadTranscription()
 
@@ -154,8 +154,8 @@
     $('#transcribe-button-spinner').hide()
     $(`#transcribe-button`).attr("disabled", false);
     if (data && 'segments' in data) { 
-      rendered = renderTranscription(data) 
-      $('#transcription-container').append( rendered )
+      $('#transcription-title-append').text( `(Language: ${data.language})`)
+      $('#transcription-container').append( renderTranscription(data) )
     } else {
       $('#transcription-container').append( 'error' )
     }
@@ -164,28 +164,31 @@
   }
 
   function handleTranscriptionLoaded(data){
-    console.debug(`transcription: ${data}`)
+    handleTranscriptionEnd(data)
+  }
+
+  function handleTranscriptionSave(tm){
+    for(let i = 0; i< tm.transcription.segments.length; i++){
+      let segment = tm.transcription.segments[i]
+      let visible_text = $(`#segment-${i}`).text()
+      if (segment.text != visible_text){
+        segment.text = visible_text
+      }
+    }
+    tm.saveTranscription()
   }
 
   function renderTranscription(data){
-    const lang = `<p>Language: ${data.language}</p>`
-    // const segments_container = `<p class="text-pre">${data.text}</p>`
-    // let segments_container = '<p contentEditable = "true">'
-    // for(let i = 0; i< data.segments.length; i++){ //old style loop.. but I like it
-    //   segments_container = segments_container.concat( `<br>${data.segments[i].text}` )
-    // }
-    // segments_container = segments_container.concat('</p>')
-
     let segments_container = '<div>'
     for(let i = 0; i< data.segments.length; i++){ //old style loop.. but I like it
       let segment = data.segments[i]
-      let segment_ts = `<span class="text-secondary">${secondsToTimestamp(segment.start)} - ${secondsToTimestamp(segment.end)}</span>`
-      let segment_text = `<span contentEditable = "true">${segment.text}</span>`
-      segments_container = segments_container.concat(segment_ts, segment_text)
+      let segment_ts = `<span class="text-secondary user-select-none">${secondsToTimestamp(segment.start)} - ${secondsToTimestamp(segment.end)}</span>`
+      let segment_text = `<span id="segment-${i}" contentEditable = "true">${segment.text}</span>`
+      segments_container = segments_container.concat(segment_ts, segment_text, '</br>')
     }
     segments_container = segments_container.concat('</div>')
 
-    return `${lang}${segments_container}`
+    return segments_container
   }
 
   function renderTranscriptionLine(segment){
