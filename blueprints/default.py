@@ -30,14 +30,6 @@ def home():
     # return "Hello, Flask!"
     return render_template('base.html')
 
-@app.route('/about')
-def about():
-    return "Questo è un sito mini fatto per provare come funziona Flask"
-
-@app.route('/hello')
-def hello_anonimo():
-    return url_for('hello', name='Alice')
-
 @app.route('/list')
 def list():
     # TODO load number of comments
