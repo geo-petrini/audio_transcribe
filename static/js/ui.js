@@ -358,7 +358,7 @@ class RecordManager {
     const uploadButton = waveSurferManager.getUploadButton()
     const nameInput = waveSurferManager.getNameInput()
 
-    $(this.recordingsContainer).prepend( 
+    $(this.recordingsContainer).append( 
       `
      <div id="${waveSurferManager.id}">
         <div id="${waveSurferManager.id}-controls" class="row justify-content-start">
