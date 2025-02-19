@@ -182,7 +182,7 @@ class Comment(db.Model, Timestamped):
             
 class Transcription(db.Model, Timestamped):
     id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.String(1000) )
+    # text = db.Column(db.String(1000) )
     language = db.Column(db.String(2) )
     track_id = db.Column(db.String(16), ForeignKey('track.id'))
     user_id = db.Column(db.Integer() , ForeignKey('user.id'))
@@ -195,6 +195,13 @@ class Transcription(db.Model, Timestamped):
         return TranscriptionSegment.query.filter(  TranscriptionSegment.transcription_id == self.id ).all()     
     
     @property
+    def text(self):
+        out = ''
+        for segment in self.segments:
+            out += segment.text + '\n'
+        return out
+    
+    @property
     def track(self):
         return Track.query.filter(Track.id == self.track_id).first()  
     
@@ -202,6 +209,10 @@ class Transcription(db.Model, Timestamped):
         return json.dumps( self.to_dict() )
     
     def to_dict(self):
+        segments_as_dict = []
+        for segment in self.segments:
+            segments_as_dict.append( segment.to_dict() )
+
         out = {
             'id' : self.id,
             'text' : self.text,
@@ -209,7 +220,7 @@ class Transcription(db.Model, Timestamped):
             'track_id' : self.track_id,
             'user_id' : self.user_id,
             'ts': self.ts_add,
-            'segments': self.segments,
+            'segments': segments_as_dict,
         }
         return out   
     
