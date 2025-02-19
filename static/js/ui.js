@@ -921,6 +921,97 @@ class DescriptionManager{
 
 }
 
+class TranscriptionManager{
+  constructor() {
+    this.eventMap = new Map();
+    this.transcription = {}
+  }    
+
+  on(event, callback) {
+      if (!this.eventMap.has(event)) {
+          this.eventMap.set(event, []);
+      }
+      this.eventMap.get(event).push(callback);
+  }
+
+  off(event, callback) {
+      if (this.eventMap.has(event)) {
+          const callbacks = this.eventMap.get(event).filter(cb => cb !== callback);
+          this.eventMap.set(event, callbacks);
+      }
+  }
+
+  emit(event, ...data) {
+      if (this.eventMap.has(event)) {
+          this.eventMap.get(event).forEach(callback => {
+              callback(...data);
+              // setTimeout(() => callback(...data), 0); // not really necessary
+          });
+      }
+  }    
+
+  bindTo(selector){
+    $(selector).on('click', null, {}, this.handleTranscriptionEvent.bind(this));
+  }
+
+  transcribe(){
+    this.emit('transcription-start')
+    this.doAjaxTranscribe().then( (response) => {
+      this.transcription = response
+      this.emit('transcription-end', response)
+    });  
+  }
+
+  async doAjaxTranscribe(){
+    let payload = {
+      language: null,
+    };    
+    let response;  
+    try{
+      response = await $.ajax({
+        url: UrlManager.getFileUrl().concat("/transcribe"),
+        type: "GET",
+        data: JSON.stringify(payload),
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+      });
+      return response;
+    } catch (error) {
+      console.error(error)
+    }
+  }      
+
+  handleTranscriptionEvent(event){
+    this.transcribe()
+  }
+
+  getTextAt(timestamp){
+    if (this.transcription && 'segments' in this.transcription){
+      for(let i = 0; i< this.transcription.segments.length; i++){ 
+        let segment = this.transcription.segments[i]
+        if (segment.start >= timestamp && timestamp <= segment.end ){
+          return segment.text
+        }
+      }
+    }      
+    return ''
+  }
+
+  getSegmentAt(timestamp){
+    if (this.transcription && 'segments' in this.transcription){
+      for(let i = 0; i< this.transcription.segments.length; i++){ 
+        let segment = this.transcription.segments[i]
+        if (segment.start >= timestamp && timestamp <= segment.end ){
+          return segment
+        }
+      }
+    }      
+    return ''
+  }    
+
+
+}
+
 class UrlManager {
   static getFileUrl() {
     const loc = window.location.href;
