@@ -143,6 +143,7 @@ class WaveSurferManager {
               <path fill="currentColor" d="M11 14.825V18q0 .425.288.713T12 19t.713-.288T13 18v-3.175l.9.9q.15.15.338.225t.375.063t.362-.088t.325-.225q.275-.3.288-.7t-.288-.7l-2.6-2.6q-.15-.15-.325-.212T12 11.425t-.375.063t-.325.212l-2.6 2.6q-.3.3-.287.7t.312.7q.3.275.7.288t.7-.288zM6 22q-.825 0-1.412-.587T4 20V4q0-.825.588-1.412T6 2h7.175q.4 0 .763.15t.637.425l4.85 4.85q.275.275.425.638t.15.762V20q0 .825-.587 1.413T18 22zm7-14V4H6v16h12V9h-4q-.425 0-.712-.288T13 8M6 4v5zv16z"/>
             </svg>
           </span>
+          <div id="${this.id}-upload-button-spinner" class="spinner-border spinner-border-sm" role="status" style="display: none;"><span class="visually-hidden">Uploading...</span></div>
         </button>
       `;
     }
@@ -190,7 +191,7 @@ class WaveSurferManager {
     const id = event.target.id.split('-')[0]
     const filename = this.getFilename() //$(`#${id}-name-input`).val()
 
-    $(`#${this.id}-controls`).append('<div class="spinner-border" role="status"><span class="visually-hidden">Uploading...</span></div>')
+    $(`#${this.id}-upload-button-spinner`).show()
     var reader = new FileReader();
     reader.readAsDataURL(event.data.blob)
     reader.onloadend = () => {
@@ -212,6 +213,7 @@ class WaveSurferManager {
 
         if ('url' in response){
           this.waveSurferInstance.destroy()
+          $(`#${this.id}-upload-button-spinner`).hide()
           $(`#${this.id}-controls`).remove()
           // $(`#${this.id}`).append(
           //   `<p>${filename.split('.')[0]}</p>`
