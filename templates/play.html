@@ -116,11 +116,15 @@
     descriptionManager.loadDescription()
 
     tm = new TranscriptionManager()
-    tm.bindTo('#transcribe-button')
-
+    // tm.bindTo('#transcribe-button')
+    tm.on('transcription-loaded', (data) => handleTranscriptionLoaded(data))
     tm.on('transcription-end', (data) => handleTranscriptionEnd(data))
-    tm.on('transcription-start', (data) => handleTranscriptionStart(data))    
+    tm.on('transcription-start', (data) => handleTranscriptionStart(data))   
+    
+    $('#transcribe-button').on('click', () => tm.transcribe())
     $('#transcription-save-button').on('click', () => tm.saveTranscription())
+    
+    tm.loadTranscription()
 
     waveSurfer.on("ready", () => {
       regionsManager.loadRegions();
@@ -139,8 +143,6 @@
       console.log("WaveSurfer is ready");
     });
 
-
-    
   }  
 
   function handleTranscriptionStart(data){
@@ -161,14 +163,27 @@
     $('#transcribe-button').hide()
   }
 
+  function handleTranscriptionLoaded(data){
+    console.debug(`transcription: ${data}`)
+  }
+
   function renderTranscription(data){
     const lang = `<p>Language: ${data.language}</p>`
     // const segments_container = `<p class="text-pre">${data.text}</p>`
-    let segments_container = '<p>'
+    // let segments_container = '<p contentEditable = "true">'
+    // for(let i = 0; i< data.segments.length; i++){ //old style loop.. but I like it
+    //   segments_container = segments_container.concat( `<br>${data.segments[i].text}` )
+    // }
+    // segments_container = segments_container.concat('</p>')
+
+    let segments_container = '<div>'
     for(let i = 0; i< data.segments.length; i++){ //old style loop.. but I like it
-      segments_container = segments_container.concat( `<br>${data.segments[i].text}` )
+      let segment = data.segments[i]
+      let segment_ts = `<span class="text-secondary">${secondsToTimestamp(segment.start)} - ${secondsToTimestamp(segment.end)}</span>`
+      let segment_text = `<span contentEditable = "true">${segment.text}</span>`
+      segments_container = segments_container.concat(segment_ts, segment_text)
     }
-    segments_container = segments_container.concat('</p>')
+    segments_container = segments_container.concat('</div>')
 
     return `${lang}${segments_container}`
   }

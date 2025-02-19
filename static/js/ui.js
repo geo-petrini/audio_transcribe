@@ -1020,11 +1020,23 @@ class TranscriptionManager{
       });
       return data;
     } catch (error) {
-      console.error(error)
+      if (error.status == 404){
+        console.debug('no transcription for this track')
+      } else {
+        console.error(error)
+      }
+      return error
     }
   }
+
   loadTranscription(){
-    //TODO implement
+    this.doAjaxLoadTranscription().then( (response) => {
+      console.debug(`response: ${response}`)
+      this.emit('transcription-loaded', response)
+    }).catch( (reason) => {
+      // in this case do not emit the 'transcription-loaded' event
+      console.error(`reason: ${reason}`)
+    });  
   }
 
   getTextAt(timestamp){

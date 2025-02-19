@@ -63,7 +63,10 @@ def transcribe(file):
 def track_transcription_load(file):
     track = Track.query.filter(Track.local_name == file).first()
     transcription = Transcription.query.filter(Transcription.track_id == track.id).first()
-    return jsonify(transcription.to_dict())
+    if (transcription):
+        return jsonify(transcription.to_dict())
+    else:
+        return jsonify(f'no transcription for track {file}'), 404
 
 @app.route('/track/<file>/transcription', methods=['POST'])
 def track_transcription_save(file):
