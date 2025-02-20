@@ -28,7 +28,7 @@ app = Blueprint('default', __name__)
 @app.route('/')
 def home():
     # return "Hello, Flask!"
-    return render_template('base.html')
+    return render_template('home.html')
 
 @app.route('/list')
 def list():
