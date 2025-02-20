@@ -1,0 +1,133 @@
+{% extends "base.html" %} {% block title %}AC - Home{% endblock %} {% block
+content %}
+
+<div class="px-4 py-5 my-5 text-center">
+  <img
+    class="d-block mx-auto mb-4"
+    src="{{url_for('static', filename='/media/images/logo.png')}}"
+    alt=""
+    width="80"
+    height="80"
+  />
+  <h1 class="display-5 fw-bold">Audio Comments</h1>
+  <div class="col-lg-6 mx-auto">
+    <p class="lead mb-4">
+      The purpose of this platform is to allow collaboration based on audio tracks. Users can share music, speeches or any other kind of sound and allow others to highlight specific regions with comments.
+    </p>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <a
+        type="button"
+        class="btn btn-primary btn-lg px-4 me-md-2"
+        href="{{ url_for('default.list') }}"
+        >Explore</a>
+    </div>
+  </div>
+</div>
+
+<div class="b-example-divider"></div>
+
+<div class="container col-xxl-8 px-4 py-5">
+    <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+      <div class="col-10 col-sm-8 col-lg-6">
+        <svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 24 24"><path fill="rgb(0,182,240)" d="M16 3.23Q17.065 2 18.7 2c.91 0 1.67.33 2.3 1s.96 1.43 1 2.3c0 .7-.33 1.51-1 2.46s-1.32 1.74-1.97 2.39q-.975.96-3.03 2.85q-2.085-1.89-3.06-2.85c-.975-.96-1.31-1.44-1.97-2.39S10 6 10 5.3c0-.91.32-1.67.97-2.3s1.43-.96 2.34-1c1.07 0 1.96.41 2.69 1.23M22 19v1l-8 2.5l-7-1.94V22H1V11h7.97l6.16 2.3A2.89 2.89 0 0 1 17 16h2c1.66 0 3 1.34 3 3M5 20v-7H3v7zm14.9-1.43c-.16-.33-.51-.57-.9-.57h-5.35c-.54 0-1.07-.08-1.58-.25l-2.38-.79l.63-1.9l2.38.79c.3.1 2.3.15 2.3.15c0-.37-.23-.7-.57-.83L8.61 13H7v5.5l6.97 1.91z"/></svg>
+      </div>
+      <div class="col-lg-6">
+        <h1 class="display-5 fw-bold lh-1 mb-3">
+          Be anonymous if you want
+        </h1>
+        <p class="lead">
+          Registration is not required. This means that you can save your tracks and leave comments anonymously. Of couse you can always register and make use of all the features like private recordings, ad-hoc sharing and groups. 
+          <br>
+          <br>
+          In any case please be mindful of others.
+        </p>
+        <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+          <a type="button" class="btn btn-primary btn-lg px-4 me-md-2" href="{{ url_for('auth.login') }}">
+            Login
+          </a>
+          <a type="button" class="btn btn-outline-secondary btn-lg px-4" href="{{ url_for('auth.signup') }}">
+            Register
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<div class="b-example-divider"></div>
+
+<div class="px-4 pt-5 my-5 text-center ">
+    <h1 class="display-4 fw-bold">Upload or Record</h1>
+    <div class="col-lg-6 mx-auto">
+      <p class="lead mb-4">
+        Upload audio files or record them directly from the browser. You can
+        listen to what you recorded, assign a name to the track and upload it to
+        the server with few simple clicks. Once uploaded the track will be
+        converted as mp3 to ensure compatibility with most devices.
+      </p>
+    </div>
+    <div class="overflow-hidden" style="max-height: 30vh">
+      <div class="container px-5">
+        <img
+          src="{{url_for('static', filename='/media/images/recording.png')}}"
+          class="img-fluid rounded-3 shadow-lg mb-4"
+          alt="Recording example"
+          width="700"
+          height="500"
+          loading="lazy"
+        />
+      </div>
+    </div>
+    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mb-5">
+      <a
+        type="button"
+        class="btn btn-primary btn-lg px-4 me-md-2"
+        href="{{ url_for('default.upload') }}"
+        >Upload</a>
+    </div>
+  </div>
+
+<div class="b-example-divider"></div>
+
+
+
+<div class="b-example-divider"></div>
+<div class="container col-xxl-8 px-4 py-5">
+  <div class="row align-items-center g-5 py-5">
+    <div class="col-10 col-sm-8 col-lg-6">
+      <img
+        src="{{url_for('static', filename='/media/images/track_region.png')}}"
+        class="d-block mx-lg-auto img-fluid overflow-hidden"
+        alt="Recording Example"
+        width="700"
+        height="500"
+        loading="lazy"
+      />
+    </div>
+    <div class="col-lg-6">
+      <h1 class="display-5 fw-bold lh-1 mb-3">Regions</h1>
+      <p class="lead">
+        Highlight parts of the track, give them a title and leave your comment. The more insightful the better.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="b-example-divider"></div>
+
+<div class="container col-xxl-8 px-4 py-5">
+    <div class="row flex-lg-row-reverse align-items-center g-5 py-5">
+      <div class="col-10 col-sm-8 col-lg-6">
+        <img src="{{url_for('static', filename='/media/images/transcription_cropped.png')}}" class="d-block mx-lg-auto img-fluid" alt="Transcription example with errors" width="700" height="500" loading="lazy">
+      </div>
+      <div class="col-lg-6">
+        <h1 class="display-5 fw-bold lh-1 mb-3">Transcriptions</h1>
+        <p class="lead">If voice is your sound make use of automated transcriptions. Powered by OpenAI Wispher models you can produce (decent) transcriptions of any spoken word... and if they are not correct you can replace them with yours.</p>
+      </div>
+    </div>
+  </div>
+
+<div class="b-example-divider"></div>
+
+
+
+{% endblock %}
