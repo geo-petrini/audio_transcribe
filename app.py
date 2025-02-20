@@ -24,6 +24,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'TERCES')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('SQLALCHEMY_DATABASE_URI', 'sqlite:///flask_hello.db')
 app.config['UPLOAD_FOLDER'] = os.getenv("UPLOAD_FOLDER", './uploads')
+app.config['WISPHER_MODEL'] = os.getenv("WISPHER_MODEL", 'base')
 #db = SQLAlchemy(app)   #removed to avoid circular import
 
 db.init_app(app)    #added to avoid circular import
