@@ -2,8 +2,8 @@ import whisper
 from flask import current_app
 
 def init_model():
-    current_app.logger.info('loading speech to text model')
-    current_app.config['stt_model'] = whisper.load_model("small")
+    current_app.logger.info(f'loading speech to text model: {current_app.config["WISPHER_MODEL"]}')
+    current_app.config['stt_model'] = whisper.load_model( current_app.config['WISPHER_MODEL'] )
     current_app.logger.info('model loaded')    
 
 
