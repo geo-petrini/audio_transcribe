@@ -27,7 +27,7 @@ The application currently is under heavy development and the list of things to d
 - add invitation to private tracks to users and groups
 - add tags
 - prepare docker compose with correct volumes for db and uploads
-- do something with the home page
+
 
 
 ## DONE
@@ -42,3 +42,4 @@ The application currently is under heavy development and the list of things to d
 - add login / user management 
 - transcription via whispher model
 - transcription can be edited and saved
+- do something with the home page
