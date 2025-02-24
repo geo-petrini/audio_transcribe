@@ -367,6 +367,12 @@ def track_region_comment_save(file, regionid):
     current_app.logger.debug(f'comment saved as {comment}')
     return jsonify( comment.to_dict() ), 200
 
+@app.route('/track/<file>/export_page', methods=['GET'])
+def track_export_page(file):
+    track = Track.query.filter(Track.local_name == file).first()
+    return render_template('export.html', track=track)
+
+
 @app.route('/track/<file>/export', methods=['GET'])
 def track_export(file):
     track = Track.query.filter(Track.local_name == file).first()

@@ -1,0 +1,53 @@
+<h1>{{track.name}}</h1>
+<h3>{{track.formatted_ts_add}}</h3>
+<h3>{{track.user.username}}</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Text</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% if track.transcription: %}
+        {% for segment in track.transcription.segments:%}
+        <tr>
+          <td>{{segment.start}} - {{segment.end}}</td>
+          <td>{{segment.text}}</td>
+        </tr>
+        {% endfor %}
+    {% endif %}
+  </tbody>
+</table>
+
+<table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Text</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if track.regions: %}
+        {% for region in track.regions:%}
+        <tr>
+            <td>{{region.start}} - {{region.end}}</td>
+            <td>{{region.formatted_ts_add}}</td>
+            <td>{{region.title}}</td>
+            <td>{{region.user.username}}</td>
+          </tr>
+            {% if region.comments: %}
+                {% for comment in region.comments:%}
+
+                <tr>
+                    <td>{{comment.formatted_ts_add}}</td>
+                    <td>{{comment.text}}</td>
+                    <td>{{comment.user.username}}</td>
+                </tr>
+                {% endfor %}
+            {% endif %}
+          {% endfor %}
+      {% endif %}
+    </tbody>
+  </table>
