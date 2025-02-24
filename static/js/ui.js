@@ -763,6 +763,7 @@ class RegionsManager {
   }
 
   saveComment(region){
+    // FIXME when saving comment the region is not refreshed and the comment input field is not cleared
     this.doAjaxSaveComment(region).then( (response) => {
       if(!response){ return }
 

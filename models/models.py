@@ -92,7 +92,10 @@ class Track(db.Model, Timestamped):
     user = db.relationship('User', backref=db.backref('track_user', lazy='joined'))    
     regions = db.relationship('Region', backref=db.backref('track_regions', lazy='joined'))   
 
-
+    @property
+    def transcription(self):
+        return Transcription.query.filter(Transcription.track_id == self.id).first()  
+    
     def __str__(self):
         return f'Track (id:{self.id}, name:"{self.name}")'
     
