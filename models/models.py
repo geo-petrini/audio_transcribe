@@ -1,6 +1,6 @@
 import os
 import secrets
-from datetime import datetime
+import datetime
 import json
 from flask_login import UserMixin
 from flask import jsonify
@@ -8,16 +8,24 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models.conn import db
 from sqlalchemy import ForeignKey, inspect
 from sqlalchemy.sql import or_, and_
-
-#from app import db # commented beause of circula import
-
-class Timestamped():
+    
+class AddTimestamped():
     ts_format = '%Y-%m-%d %H:%M:%S'
-    ts_add = db.Column( db.Float(), default=datetime.now().timestamp() )
+    ts_format_date = '%Y-%m-%d'
+    ts_format_time = '%H:%M:%S'
+    ts_add = db.Column( db.Float(), default=datetime.datetime.now().timestamp() )
 
     @property
     def formatted_ts_add(self):
-        return datetime.fromtimestamp(self.ts_add).strftime(self.ts_format)
+        return datetime.datetime.fromtimestamp(self.ts_add, tz=datetime.timezone.utc).strftime(self.ts_format)
+    
+    @property
+    def formatted_ts_add_date(self):
+        return datetime.datetime.fromtimestamp(self.ts_add, tz=datetime.timezone.utc).strftime(self.ts_format_date)    
+    
+    @property
+    def formatted_ts_add_time(self):
+        return datetime.datetime.fromtimestamp(self.ts_add, tz=datetime.timezone.utc).strftime(self.ts_format_time)    
 
 class Role(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -82,7 +90,7 @@ class User(UserMixin, db.Model):
     def has_role(self, role_name):
         return any(role.name == role_name for role in self.roles)
     
-class Track(db.Model, Timestamped):
+class Track(db.Model, AddTimestamped):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     local_name = db.Column(db.String(32), nullable=False)
@@ -115,7 +123,7 @@ class Track(db.Model, Timestamped):
         return out
     
         
-class Region(db.Model, Timestamped):
+class Region(db.Model, AddTimestamped):
     id = db.Column(db.Integer, primary_key=True)
     native_id = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(255))
@@ -144,10 +152,9 @@ class Region(db.Model, Timestamped):
             'ts': self.ts_add,
             'track':self.track.to_dict()
         }
-        return out        
-        
+        return out      
 
-class Comment(db.Model, Timestamped):
+class Comment(db.Model, AddTimestamped):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.String(1000) )
     track_id = db.Column(db.String(16), ForeignKey('track.id'))
@@ -183,7 +190,7 @@ class Comment(db.Model, Timestamped):
     def __repr__(self):
         return f'Comment: {self.to_dict()}'
             
-class Transcription(db.Model, Timestamped):
+class Transcription(db.Model, AddTimestamped):
     id = db.Column(db.Integer, primary_key=True)
     # text = db.Column(db.String(1000) )
     language = db.Column(db.String(2) )
@@ -233,7 +240,7 @@ class TranscriptionSegment(db.Model):
     start = db.Column(db.Float())
     end = db.Column(db.Float())
     transcription_id = db.Column(db.Integer() , ForeignKey('transcription.id'))
-    
+
     def to_json(self):
         return json.dumps( self.to_dict() )
     
@@ -246,7 +253,7 @@ class TranscriptionSegment(db.Model):
             'end': self.end
         }
         return out      
-    
+   
     
 def _getAnonymous():
     return User.query.filter_by(username='anonymous').first()
@@ -285,3 +292,14 @@ def init_db():
         
        
         
+@property
+def formatted_start(self):
+    return datetime.datetime.fromtimestamp(self.start, datetime.timezone.utc).strftime('%H:%M:%S')   
+@property
+def formatted_end(self):
+    return datetime.datetime.fromtimestamp(self.end, datetime.timezone.utc).strftime('%H:%M:%S')   
+
+Region.formatted_start = formatted_start
+Region.formatted_end = formatted_end
+TranscriptionSegment.formatted_start = formatted_start
+TranscriptionSegment.formatted_end = formatted_end
