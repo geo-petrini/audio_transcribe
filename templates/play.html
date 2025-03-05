@@ -46,7 +46,19 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M4 5h16v2H4zm0 4h16v2H4zm0 4h16v2H4zm0 4h10v2H4z"/></svg>
       </span>
       <div id="transcribe-button-spinner" class="spinner-border spinner-border-sm" role="status" style="display: none;"><span class="visually-hidden">Loading...</span></div>
-    </button>    
+    </button>
+    
+    <div class="btn-group float-end" role="group">
+      <button type="button" class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M5 20h14v-2H5m14-9h-4V3H9v6H5l7 7z"/></svg>
+      </button>
+  
+      <ul class="dropdown-menu">
+        <!-- <li><a class="dropdown-item" href="#">Download track <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m14 2l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm4 18V9h-5V4H6v16zm-5-10v2h-2v5a2 2 0 0 1-2 2a2 2 0 0 1-2-2a2 2 0 0 1 2-2c.4 0 .7.1 1 .3V10z"/></svg></span></a></li> -->
+        <li><a class="dropdown-item" href="{{url_for('default.track_export', file=track.local_name)}}">Export text <span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="m23 19l-3-3v2h-4v2h4v2zm-9.2 3H6c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h8l6 6v5.1c-.3-.1-.7-.1-1-.1s-.7 0-1 .1V9h-5V4H6v16h7.1c.1.7.4 1.4.7 2M8 12h8v1.8c-.1.1-.2.1-.3.2H8zm0 4h5v2H8z"/></svg></span></a></li>
+      </ul>
+    </div>
+      
   </div>
 </div>
 
