@@ -104,6 +104,10 @@ class Track(db.Model, AddTimestamped):
     def transcription(self):
         return Transcription.query.filter(Transcription.track_id == self.id).first()  
     
+    @property
+    def description(self):
+        return Comment.query.filter(Comment.track_id == self.id).first()
+    
     def __str__(self):
         return f'Track (id:{self.id}, name:"{self.name}")'
     
