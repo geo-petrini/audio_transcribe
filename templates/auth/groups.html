@@ -14,34 +14,13 @@
 <div class="row">
     <div class="col-2">
       <div id="list-menu" class="list-group">
-        <a class="list-group-item list-group-item-action" href="#list-item-1">Groups</a>
-        <a class="list-group-item list-group-item-action" href="#list-item-2">Create</a>
+        <a class="list-group-item list-group-item-action" href="#list-item-1">Create</a>
+        <a class="list-group-item list-group-item-action" href="#list-item-2">Groups</a>
       </div>
     </div>
     <div class="col-10">
       <div data-bs-spy="scroll" data-bs-target="#list-menu" data-bs-smooth-scroll="true" class="scrollspy-menu" tabindex="0">
-        <h4 id="list-item-1">Groups</h4>
-        <table class="table">
-            <thead>
-              <tr>
-                <th scope="col">Group</th>
-                <th scope="col">Members</th>
-                <th scope="col"></th>
-              </tr>
-            </thead>
-            <tbody>
-                {%for group in groups %}
-                <tr>
-                    <td>{{group.name}}</td>
-                    <td>{{group.members}}</td>
-                    <td>
-                    </td>
-                </tr>
-                {%endfor%}
-            </tbody>
-        </table>
-
-        <h4 id="list-item-2">Create</h4>
+        <h4 id="list-item-1">Create</h4>
         <form method="POST" action="groups">
             <div class="mb-3">
                 <input class="form-control" type="text" name="groupname" placeholder="Group Name" autofocus="">
@@ -58,6 +37,29 @@
                 </div>
             {% endif %}
         {% endwith %}
+        
+        <h4 id="list-item-2">Groups</h4>
+        <table class="table">
+            <thead>
+              <tr>
+                <th scope="col">Group</th>
+                <th scope="col">Members</th>
+                <th scope="col"></th>
+              </tr>
+            </thead>
+            <tbody>
+                {%for group in groups %}
+                <tr>
+                    <td>{{group.name}}</td>
+                    <td>{%for member in group.members%}<span class="badge text-bg-info me-1">{{member.username}} </span>{%endfor%}</td>
+                    <td>
+                    </td>
+                </tr>
+                {%endfor%}
+            </tbody>
+        </table>
+
+        
       </div>
     </div>
   </div>
