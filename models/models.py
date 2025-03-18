@@ -8,6 +8,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models.conn import db
 from sqlalchemy import ForeignKey, inspect
 from sqlalchemy.sql import or_, and_
+from sqlalchemy.ext.associationproxy import association_proxy
     
 class AddTimestamped():
     ts_format = '%Y-%m-%d %H:%M:%S'
@@ -39,16 +40,47 @@ user_roles = db.Table('user_roles',
     db.Column('role_id', db.Integer, db.ForeignKey('role.id'))
 )
 
-user_groups = db.Table('user_groups',
-    db.Column('group_id', db.Integer, db.ForeignKey('group.id')),
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id'))
-)
+class Permission(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    value = db.Column(db.String(100))
+    
+    TRACK_OPEN = 'TRACK_OPEN'
+    TRACK_DELETE = 'TRACK_DELETE'
+    COMMENT_ADD = 'COMMENT_ADD'
+    COMMENT_EDIT = 'COMMENT_EDIT'
+    COMMENT_DELETE = 'COMMENT_DELETE'
+    TRANSCRIPTION_ADD = 'TRANSCRIPTION_ADD'
+    TRANSCRIPTION_EDIT = 'TRANSCRIPTION_EDIT'
+    TRANSCRIPTION_DELETE = 'TRANSCRIPTION_DELETE'
+    DESCRIPTION_ADD = 'DESCRIPTION_ADD'
+    DESCRIPTION_EDIT = 'DESCRIPTION_EDIT'
+    DESCRIPTION_DELETE = 'DESCRIPTION_DELETE'
+    GROUP_EDIT = 'GROUP_EDIT'
+    GROUP_DELETE = 'GROUP_DELETE'
+
+class Member(db.Model):
+    __tablename__ = 'members'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer() , ForeignKey('user.id'))
+    group_id = db.Column(db.Integer() , ForeignKey('group.id'))
+    
+    user = db.relationship('User', back_populates='groups')
+    group = db.relationship('Group', back_populates='members')    
+    permission = db.relationship('MemberPermission', back_populates='member')
+    permissions = association_proxy('member_permissions', 'member_id')
+
+class MemberPermission(db.Model):
+    __tablename__ = 'member_permissions'
+    id = db.Column(db.Integer, primary_key=True)
+    member_id = db.Column(db.Integer() , ForeignKey('member.id'))
+    permission = db.Column(db.Integer() , ForeignKey('permission.id'))
 
 class Group(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
 
-    members = db.relationship('User', secondary=user_groups, backref=db.backref('user_groups', lazy='joined'))
+    group_users = db.relationship('Member', back_populates='user')
+    members = association_proxy('members', 'user')
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer(), primary_key=True)
@@ -59,7 +91,9 @@ class User(UserMixin, db.Model):
     # Relazione many-to-many tra User e Role
     roles = db.relationship('Role', secondary=user_roles, backref=db.backref('user_roles', lazy='joined')) #TODO chk se lazy='dynamic' funziona
     # Relazione many-to-many tra User e Group
-    groups = db.relationship('Group', secondary=user_groups, backref=db.backref('user_groups', lazy='joined'))
+    group_users = db.relationship('Member', back_populates='group')
+    groups = association_proxy('members', 'group')
+
 
     # I prefer to use properties with a query instad of relationships to avoid joins on User select and useless backreferences
     @property
@@ -101,7 +135,10 @@ class User(UserMixin, db.Model):
         return any(role.name == role_name for role in self.roles)
     
     def is_member(self, group_name):
-        return any(group.name == group_name for group in self.groups)    
+        return any(group.name == group_name for group in self.groups)   
+    
+    def has_permission(self, group_name, permission):
+        return False
     
 class Track(db.Model, AddTimestamped):
     id = db.Column(db.Integer, primary_key=True)
@@ -301,10 +338,26 @@ def _add_roles():
         db.session.add(user_role)
         db.session.commit()           
 
+def _add_permissions():
+    for attr, value in Permission.__dict__.iteritems():
+        if attr == value:
+            if not Permission.query.filter_by(value=value).first():
+                permission = Permission(value=value)
+                db.session.add(permission)
+                db.session.commit()
+                
+def _list_permissions():
+    l = []
+    for attr, value in Permission.__dict__.iteritems():
+        if attr == value:    
+            l.append(value)
+    return l
+
 def init_db():
     _add_roles()
     _add_anonymous_user()
     _add_admin_user()
+    print(f'permissions: {_list_permissions()}')
         
        
         
