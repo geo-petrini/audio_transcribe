@@ -1,0 +1,13 @@
+services:
+  at:
+    image: audio-transcribe
+    ports:
+    - 5001:5000
+    volumes:
+    - at_data:/app/instance
+    environment:
+      - WISPHER_MODEL=base
+      - ADMIN_PASSWORD=YOUR_PASSWORD
+volumes:
+  at_data:
+    driver: local

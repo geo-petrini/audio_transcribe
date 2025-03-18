@@ -5,4 +5,5 @@ flask-migrate
 python-dotenv
 ffmpeg-binaries
 ffmpeg-asyncio
+triton>=2.0.0; sys_platform == 'linux'
 openai-whisper
