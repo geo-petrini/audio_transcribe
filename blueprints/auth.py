@@ -101,76 +101,68 @@ def admin_dashboard():
         return redirect(url_for('dashboard'))
     return render_template('admin_dashboard.html')
 
+@app.route('/groups')
+@login_required
+def groups():
+    groups = current_user.groups
+    return render_template('auth/groups.html', groups=current_user.groups)
 
-
-### deprecated code
-
-# @app.route('/add')
-# def add_user():
-#     # username='Pinco'
-#     # email='pinco@pallino.net'
-#     username=''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-#     email=f'{username}@pallino.net'
-
-#     user = User(username=username, email=email)
-#     # user.set_password(password)  # Imposta la password criptata
-#     db.session.add(user)  # equivalente a INSERT
-#     db.session.commit()
-#     return f"Utente {username} creato con successo."  
-
-# @app.route('/<id>', methods =['PUT'])
-# def update_user(id):
-#     user = User.query.filter_by(id = id).first()
-#     if user:
-#         user.username = request.json.get('username')
-#         user.email = request.json.get('email')
-#         try: 
-#             db.session.commit()
-#             return 'Updated', 200
-#         except Exception as e:
-#             return f'Error saving user: {e}', 500
-#     else:
-#         return 'Invalid user ID', 404
-
-# @app.route('/<id>', methods =['DELETE'])
-# def delete_user(id):
-#     try:
-#         user = User.query.filter_by(id = id).first()
-#         db.session.delete(user)
-#         db.session.commit()
-#         return 'Deleted', 200
-#     except Exception as e:
-#         return f'Error deleting user: {e}', 500
-
-
-# @app.route('/list')
-# def list_users():
-#     users = User.query.all()
-#     return f'{users}'
-
-# @app.route('/<id>/posts')
-# def get_user_posts(id):
-#     user = User.query.filter_by(id=id).first()
-#     if user:
-#         posts = Post.query.filter_by(user_id=user.id).all()
-#         return jsonify(json_list=[p.to_json() for p in posts])
-#     else:
-#         return None
+@app.route('/groups', methods=['POST'])
+@login_required
+def groups_post():
+    redirect_page = 'auth.groups'
+    groupname = request.form["groupname"]
+    members = request.form.getlist("members[]")
     
-# @app.route('/<id>/post', methods = ['POST'])
-# def add_user_post(id):
-#     #check if user exists... just in case someone is messing with my system :D
-#     user = User.query.filter_by(id=id).first()
-#     if user:
-#         try:
-#             post = Post(title = request.json.get('title'),
-#                         body = request.json.get('body'),
-#                         user_id = id)
-            
-#             db.session.add(post)  # equivalente a INSERT
-#             db.session.commit()
-#             return 'Post saved', 200
-#         except Exception as e:
-#             return f'Error saving post: {e}', 500 
-#     else:
-#         return 'Invalid user id', 404
+    if not groupname:
+        flash('Invalid group name')
+        return redirect(url_for(redirect_page))
+    if not members:
+        flash('Invalid members')
+        return redirect(url_for(redirect_page))
+
+    group = Group.query.filter_by(name=groupname).first()
+    if group: 
+        flash('Group with this name already exists')
+        return redirect(url_for(redirect_page))
+
+    group = Group(name=groupname)
+    db.session.add(group)
+    db.session.commit()
+
+    for member_id in members:
+        user = User.query.filter(User.id == member_id).first()
+        user.groups.append(group)
+        db.session.commit()
+
+    #TODO add members one by one
+
+    return redirect(url_for(redirect_page))
+
+@app.route('/groups/<id>', methods=['DELETE'])
+@login_required
+#TODO verify membership o ownership
+def group_delete(id):
+    group = Group.query.filter_by(id=id).first()
+    db.session.delete(group)
+    db.session.commit()
+
+@app.route('/users')
+@login_required
+def users():
+    '''
+    return all users, except current_user in select2 data format
+    '''
+    name_filter = request.args.get('name')
+    if name_filter:
+        search = "%{}%".format(name_filter) # TODO replace with f string
+        users = User.query.filter(User.username.like(search)).all()
+    else:
+        users = User.query.all()
+    out = { 'results':[]}
+    for i, user in enumerate(users):
+        record = { 'id':user.id, 'text':user.username}
+        out['results'].append( record )
+
+    return jsonify(out)
+
