@@ -39,6 +39,16 @@ user_roles = db.Table('user_roles',
     db.Column('role_id', db.Integer, db.ForeignKey('role.id'))
 )
 
+class Group(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100))
+
+user_groups = db.Table('user_groups',
+    db.Column('group_id', db.Integer, db.ForeignKey('group.id')),
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id'))
+)
+
+
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
@@ -47,6 +57,7 @@ class User(UserMixin, db.Model):
 
     # Relazione many-to-many tra User e Role
     roles = db.relationship('Role', secondary=user_roles, backref=db.backref('user_roles', lazy='joined')) #TODO chk se lazy='dynamic' funziona
+    groups = db.relationship('Group', secondary=user_groups, backref=db.backref('user_groups', lazy='joined')) #TODO chk se lazy='dynamic' funziona
     # tracks = db.relationship('Track', backref=db.backref('user_tracks', lazy='joined')) #TODO chk se lazy='dynamic' funziona
     # regions = db.relationship('Region', backref=db.backref('user_regions', lazy='joined')) #TODO chk se lazy='dynamic' funziona
     # comments = db.relationship('Comment', backref=db.backref('user_comments', lazy='joined')) #TODO chk se lazy='dynamic' funziona
@@ -258,7 +269,6 @@ class TranscriptionSegment(db.Model):
         }
         return out      
    
-    
 def _getAnonymous():
     return User.query.filter_by(username='anonymous').first()
     
