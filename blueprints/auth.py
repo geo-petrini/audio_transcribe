@@ -32,6 +32,7 @@ def login_post():
     # check if the user actually exists
     # take the user-supplied password, hash it, and compare it to the hashed password in the database
     if not user or not user.check_password(password):
+        current_app.logger.error(f'failed login for user {user}')
         flash('Please check your login details and try again.')
         return redirect(url_for('auth.login')) # if the user doesn't exist or password is wrong, reload the page
 
@@ -79,6 +80,8 @@ def signup_post():
     user.set_password(password)  # Imposta la password criptata
     db.session.add(user)  # equivalente a INSERT
     db.session.commit()
+
+    # TODO assign role
 
     return redirect(url_for('auth.login'))
 
