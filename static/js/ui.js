@@ -761,8 +761,9 @@ class RegionsManager {
   }
 
   initRegionComments(region){
-    if (!region.data){ region.data = {comments:[]}}
+    if (!region.data){ region.data = {}}
     if (!'comments' in region.data) { region.data[comments] = []}
+    if ('comments' in region.data && region.data.comments == null) { region.data.comments = []}
   }
 
   saveComment(region){
