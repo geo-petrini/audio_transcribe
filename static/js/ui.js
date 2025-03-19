@@ -584,6 +584,7 @@ class RegionsManager {
   }  
 
   handleRegionToggle(event){
+    // TODO handle event differently if it is triggered by ws or by card click
     let isExpanded = event.currentTarget.classList.contains('show');
     let region = event.data.region
     let ws = event.data.ws
@@ -594,7 +595,9 @@ class RegionsManager {
       // because setting the ws time triggers the region.in event 
       // which itself toggles the section causing a loop
     } else {
-      ws.setTime(region.start)
+      if (!isExpanded) {
+        ws.setTime(region.start)
+      }
     }
   }  
 
